@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="dark light" />
   <title>Психомагия — Telegram Mini App (прототип)</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     /* Тема по умолчанию: тёмная. Светлая задаётся [data-theme="light"] на <html> из Telegram или системы. */
     :root{
@@ -16,10 +17,11 @@
       --text:#ffffff;
       --muted: rgba(255,255,255,.70);
       --muted2: rgba(255,255,255,.52);
-      /* Основная палитра: бирюзовый → синий → фиолетовый */
+      /* Основная палитра: бирюзовый → голубой → фиолетовый #8f43c6 */
       --accent1: #53DBC6;
       --accent2: #68A4CE;
       --accent3: #9878DB;
+      --accent4: #8f43c6;
       --accent1-light: #7ae5d8;
       --shadow: 0 20px 60px rgba(0,0,0,.55);
       --shadow2: 0 12px 30px rgba(0,0,0,.45);
@@ -41,8 +43,9 @@
       color:var(--text);
       background:
         radial-gradient(1200px 900px at 30% -10%, rgba(83,219,198,.2), transparent 55%),
-        radial-gradient(1100px 900px at 110% 10%, rgba(152,120,219,.18), transparent 55%),
-        radial-gradient(1000px 800px at 60% 120%, rgba(104,164,206,.15), transparent 60%),
+        radial-gradient(1100px 900px at 110% 10%, rgba(143,67,198,.2), transparent 55%),
+        radial-gradient(1000px 800px at 60% 120%, rgba(104,164,206,.18), transparent 60%),
+        radial-gradient(900px 700px at 80% 20%, rgba(152,120,219,.14), transparent 50%),
         linear-gradient(180deg, #040406 0%, #080812 55%, #06060a 100%);
       overflow-x:hidden;
     }
@@ -71,8 +74,9 @@
       border-radius:999px;
       background:
         radial-gradient(circle at 30% 30%, rgba(83,219,198,.25), transparent 58%),
-        radial-gradient(circle at 70% 60%, rgba(152,120,219,.22), transparent 58%),
-        radial-gradient(circle at 55% 80%, rgba(104,164,206,.2), transparent 62%);
+        radial-gradient(circle at 70% 60%, rgba(143,67,198,.22), transparent 58%),
+        radial-gradient(circle at 55% 80%, rgba(104,164,206,.22), transparent 62%),
+        radial-gradient(circle at 15% 70%, rgba(152,120,219,.18), transparent 55%);
       animation:floaty 12s var(--ease) infinite;
     }
     .aurora:after{ left:35vw; top:10vh; opacity:.75; animation-duration:15s; animation-direction:reverse; }
@@ -85,7 +89,7 @@
       -webkit-overflow-scrolling:touch;
       overscroll-behavior: none;
       background:transparent;
-      padding-bottom: calc(96px + env(safe-area-inset-bottom));
+      padding-bottom: calc(68px + env(safe-area-inset-bottom));
     }
 
     .topbar{
@@ -112,7 +116,8 @@
       position:absolute; inset:-20px;
       background:
         radial-gradient(circle at 35% 25%, rgba(83,219,198,.35), transparent 55%),
-        radial-gradient(circle at 70% 65%, rgba(152,120,219,.22), transparent 58%);
+        radial-gradient(circle at 70% 65%, rgba(143,67,198,.28), transparent 58%),
+        radial-gradient(circle at 50% 50%, rgba(104,164,206,.2), transparent 62%);
       animation:sheen 7s var(--ease) infinite;
     }
     .avatar.initials{
@@ -200,7 +205,8 @@
       position:absolute; inset:-22px;
       background:
         radial-gradient(circle at 30% 30%, rgba(83,219,198,.25), transparent 60%),
-        radial-gradient(circle at 70% 70%, rgba(104,164,206,.18), transparent 62%);
+        radial-gradient(circle at 70% 70%, rgba(104,164,206,.2), transparent 62%),
+        radial-gradient(circle at 50% 50%, rgba(143,67,198,.18), transparent 58%);
       opacity:.85;
     }
     .st-ico > span{ position:relative; font-size:14px; opacity:.95; }
@@ -260,6 +266,7 @@
     .card[data-tone="gold"]{ --tone: rgba(83,219,198,.22); }
     .card[data-tone="purple"]{ --tone: rgba(152,120,219,.22); }
     .card[data-tone="cyan"]{ --tone: rgba(104,164,206,.22); }
+    .card[data-tone="blue"]{ --tone: rgba(143,67,198,.22); }
     .card[data-tone="red"]{ --tone: rgba(255,74,110,.20); }
     .card[data-tone="green"]{ --tone: rgba(83,219,198,.18); }
 
@@ -269,8 +276,8 @@
       position:absolute; inset:-2px;
       background:
         radial-gradient(760px 240px at 0% 0%, var(--tone), transparent 60%),
-        radial-gradient(700px 240px at 100% 100%, rgba(152,120,219,.12), transparent 62%),
-        radial-gradient(520px 260px at 70% 10%, rgba(255,255,255,.06), transparent 62%);
+        radial-gradient(700px 240px at 100% 100%, rgba(143,67,198,.14), transparent 62%),
+        radial-gradient(520px 260px at 70% 10%, rgba(104,164,206,.1), transparent 62%);
       opacity:.92;
       pointer-events:none;
     }
@@ -334,8 +341,9 @@
       position:absolute; inset:-2px;
       background:
         radial-gradient(900px 600px at 20% 0%, rgba(83,219,198,.26), transparent 55%),
-        radial-gradient(800px 600px at 110% 30%, rgba(152,120,219,.22), transparent 60%),
-        radial-gradient(700px 500px at 60% 120%, rgba(104,164,206,.18), transparent 60%);
+        radial-gradient(800px 600px at 110% 30%, rgba(143,67,198,.22), transparent 60%),
+        radial-gradient(700px 500px at 60% 120%, rgba(104,164,206,.2), transparent 60%),
+        radial-gradient(600px 400px at 5% 80%, rgba(152,120,219,.16), transparent 55%);
       opacity:.95;
     }
     /* subtle watermark illustration */
@@ -348,7 +356,7 @@
       background-repeat:no-repeat;
       background-size:contain;
       pointer-events:none;
-      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cdefs%3E%3CradialGradient id='g' cx='35%25' cy='35%25' r='70%25'%3E%3Cstop offset='0%25' stop-color='%2353DBC6' stop-opacity='.9'/%3E%3Cstop offset='55%25' stop-color='%2368A4CE' stop-opacity='.4'/%3E%3Cstop offset='100%25' stop-color='%239878DB' stop-opacity='.0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='102' cy='92' r='66' fill='url(%23g)'/%3E%3Cpath d='M40 120c30-34 92-34 122 0' fill='none' stroke='white' stroke-opacity='.35' stroke-width='4' stroke-linecap='round'/%3E%3Cpath d='M60 78c22 18 58 18 80 0' fill='none' stroke='white' stroke-opacity='.22' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cdefs%3E%3CradialGradient id='g' cx='35%25' cy='35%25' r='70%25'%3E%3Cstop offset='0%25' stop-color='%2353DBC6' stop-opacity='.9'/%3E%3Cstop offset='40%25' stop-color='%2368A4CE' stop-opacity='.5'/%3E%3Cstop offset='70%25' stop-color='%238f43c6' stop-opacity='.35'/%3E%3Cstop offset='100%25' stop-color='%239878DB' stop-opacity='.0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='102' cy='92' r='66' fill='url(%23g)'/%3E%3Cpath d='M40 120c30-34 92-34 122 0' fill='none' stroke='white' stroke-opacity='.35' stroke-width='4' stroke-linecap='round'/%3E%3Cpath d='M60 78c22 18 58 18 80 0' fill='none' stroke='white' stroke-opacity='.22' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E");
     }
 
     .hero-inner{ position:relative; padding:18px 18px 16px; }
@@ -364,8 +372,8 @@
     }
     .glow-dot{
       width:8px;height:8px;border-radius:999px;
-      background:linear-gradient(135deg, var(--accent1), var(--accent1-light));
-      box-shadow:0 0 18px rgba(83,219,198,.5);
+      background:linear-gradient(135deg, var(--accent1), var(--accent4), var(--accent1-light));
+      box-shadow:0 0 18px rgba(83,219,198,.5), 0 0 12px rgba(143,67,198,.35);
       animation:pulse 2.2s var(--ease) infinite;
     }
     @keyframes pulse{ 0%{transform:scale(1);opacity:1} 50%{transform:scale(1.18);opacity:.75} 100%{transform:scale(1);opacity:1} }
@@ -454,8 +462,9 @@
       position:absolute; inset:-2px;
       background:
         radial-gradient(820px 360px at 0% 0%, rgba(83,219,198,.2), transparent 60%),
-        radial-gradient(820px 360px at 100% 100%, rgba(152,120,219,.16), transparent 62%),
-        radial-gradient(520px 260px at 70% 10%, rgba(104,164,206,.08), transparent 62%);
+        radial-gradient(820px 360px at 100% 100%, rgba(143,67,198,.18), transparent 62%),
+        radial-gradient(520px 260px at 70% 10%, rgba(104,164,206,.14), transparent 62%),
+        radial-gradient(400px 200px at 50% 100%, rgba(152,120,219,.1), transparent 55%);
       opacity:.92;
       pointer-events:none;
     }
@@ -506,7 +515,8 @@
       position:absolute; inset:-20px;
       background:
         radial-gradient(circle at 30% 30%, rgba(83,219,198,.22), transparent 58%),
-        radial-gradient(circle at 70% 70%, rgba(104,164,206,.15), transparent 60%);
+        radial-gradient(circle at 70% 70%, rgba(104,164,206,.18), transparent 60%),
+        radial-gradient(circle at 50% 50%, rgba(143,67,198,.16), transparent 58%);
       opacity:.85;
     }
     .tile-main{ flex:1; min-width:0; }
@@ -524,21 +534,22 @@
     .fav:hover{ transform:translateY(-1px); background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.14); }
     .fav.on{ background:rgba(83,219,198,.2); border-color:rgba(83,219,198,.4); box-shadow:0 0 18px rgba(83,219,198,.22); }
 
-    /* Bottom nav — таб-бар в виде тёмной «таблетки», минималистичные иконки, подсветка цветом */
+    /* Bottom nav — компактная «таблетка», не заходит за края экрана */
     .bottom-nav{
       position:fixed; left:0; right:0; bottom:0; z-index:7;
-      padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+      padding:8px 20px calc(8px + env(safe-area-inset-bottom));
       display:flex;
       justify-content:center;
+      align-items:center;
     }
     .nav{
-      max-width:560px;
+      max-width:min(560px, calc(100vw - 40px));
       width:100%;
       display:flex;
       justify-content:space-around;
       align-items:stretch;
       gap:0;
-      padding:10px 12px;
+      padding:6px 8px;
       background:rgba(22,22,28,.95);
       border-radius:999px;
       border:1px solid rgba(255,255,255,.06);
@@ -553,25 +564,25 @@
       flex-direction:column;
       align-items:center;
       justify-content:center;
-      gap:4px;
-      padding:8px 6px;
-      min-height:48px;
+      gap:2px;
+      padding:5px 4px;
+      min-height:40px;
       color:rgba(255,255,255,.55);
-      font-size:10px;
+      font-size:9px;
       font-weight:600;
-      letter-spacing:.05px;
+      letter-spacing:.02px;
       text-align:center;
       cursor:pointer;
       border:none;
       background:transparent;
-      border-radius:12px;
+      border-radius:10px;
       transition:color .2s var(--ease);
       user-select:none;
       -webkit-tap-highlight-color:transparent;
     }
     .nav-ico{
-      width:22px;
-      height:22px;
+      width:18px;
+      height:18px;
       display:flex;
       align-items:center;
       justify-content:center;
@@ -587,7 +598,7 @@
       stroke-linejoin:round;
       transition:stroke .2s var(--ease);
     }
-    .nav-label{ font-size:10px; }
+    .nav-label{ font-size:9px; }
     .nav-item:hover{ color:rgba(255,255,255,.8); }
     .nav-item.active{
       color:#53DBC6;
@@ -667,9 +678,11 @@
       .list-hscroll .tile{ flex:0 0 min(88%, 300px); min-width:260px; }
       .hero-compact .hero-inner{ padding:12px 14px 10px; }
       .btn{ padding:11px 12px; min-height:44px; font-size:12px; }
-      .nav-item{ min-height:48px; padding:8px 4px; font-size:10px; }
-      .bottom-nav{ padding:6px 0 calc(6px + env(safe-area-inset-bottom)); }
-      .app{ padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
+      .nav-item{ min-height:38px; padding:4px 2px; font-size:9px; }
+      .nav-ico{ width:16px; height:16px; }
+      .bottom-nav{ padding:6px 16px calc(6px + env(safe-area-inset-bottom)); }
+      .nav{ padding:5px 6px; max-width:calc(100vw - 32px); }
+      .app{ padding-bottom: calc(62px + env(safe-area-inset-bottom)); }
     }
     @media (prefers-reduced-motion: reduce){
       *{ animation:none !important; transition:none !important; }
@@ -685,23 +698,26 @@
       --text: #1c1c1e;
       --muted: rgba(0,0,0,.72);
       --muted2: rgba(0,0,0,.55);
+      --accent4: #8f43c6;
       --shadow: 0 20px 60px rgba(0,0,0,.1);
       --shadow2: 0 12px 30px rgba(0,0,0,.08);
     }
     [data-theme="light"] body{
       background:
-        radial-gradient(1200px 900px at 30% -10%, rgba(83,219,198,.12), transparent 55%),
-        radial-gradient(1100px 900px at 110% 10%, rgba(152,120,219,.1), transparent 55%),
-        radial-gradient(1000px 800px at 60% 120%, rgba(104,164,206,.1), transparent 60%),
+        radial-gradient(1200px 900px at 30% -10%, rgba(83,219,198,.14), transparent 55%),
+        radial-gradient(1100px 900px at 110% 10%, rgba(143,67,198,.14), transparent 55%),
+        radial-gradient(1000px 800px at 60% 120%, rgba(104,164,206,.12), transparent 60%),
+        radial-gradient(900px 700px at 80% 20%, rgba(152,120,219,.08), transparent 50%),
         linear-gradient(180deg, #e8e8ec 0%, #f0f0f2 55%, #f4f4f5 100%);
     }
     [data-theme="light"] body:before{ opacity:.04; }
     [data-theme="light"] .aurora:before,
     [data-theme="light"] .aurora:after{
       background:
-        radial-gradient(circle at 30% 30%, rgba(83,219,198,.15), transparent 58%),
-        radial-gradient(circle at 70% 60%, rgba(152,120,219,.12), transparent 58%),
-        radial-gradient(circle at 55% 80%, rgba(104,164,206,.12), transparent 62%);
+        radial-gradient(circle at 30% 30%, rgba(83,219,198,.16), transparent 58%),
+        radial-gradient(circle at 70% 60%, rgba(143,67,198,.14), transparent 58%),
+        radial-gradient(circle at 55% 80%, rgba(104,164,206,.14), transparent 62%),
+        radial-gradient(circle at 15% 70%, rgba(152,120,219,.1), transparent 55%);
     }
     [data-theme="light"] .topbar{
       background:linear-gradient(180deg, rgba(244,244,245,.92) 0%, rgba(244,244,245,.75) 60%, rgba(244,244,245,0) 100%);
@@ -714,7 +730,8 @@
     [data-theme="light"] .avatar:before{
       background:
         radial-gradient(circle at 35% 25%, rgba(83,219,198,.25), transparent 55%),
-        radial-gradient(circle at 70% 65%, rgba(152,120,219,.15), transparent 58%);
+        radial-gradient(circle at 70% 65%, rgba(143,67,198,.22), transparent 58%),
+        radial-gradient(circle at 50% 50%, rgba(104,164,206,.16), transparent 62%);
     }
     [data-theme="light"] .avatar.initials{ color:rgba(0,0,0,.85); }
     [data-theme="light"] .level{
@@ -735,8 +752,9 @@
     }
     [data-theme="light"] .st-ico:before{
       background:
-        radial-gradient(circle at 30% 30%, rgba(83,219,198,.2), transparent 60%),
-        radial-gradient(circle at 70% 70%, rgba(104,164,206,.15), transparent 62%);
+        radial-gradient(circle at 30% 30%, rgba(83,219,198,.22), transparent 60%),
+        radial-gradient(circle at 70% 70%, rgba(104,164,206,.18), transparent 62%),
+        radial-gradient(circle at 50% 50%, rgba(143,67,198,.16), transparent 58%);
     }
     [data-theme="light"] .st-note{ color:rgba(0,0,0,.5); }
     [data-theme="light"] .card{
@@ -757,9 +775,10 @@
     }
     [data-theme="light"] .hero:before{
       background:
-        radial-gradient(900px 600px at 20% 0%, rgba(83,219,198,.15), transparent 55%),
-        radial-gradient(800px 600px at 110% 30%, rgba(152,120,219,.12), transparent 60%),
-        radial-gradient(700px 500px at 60% 120%, rgba(104,164,206,.1), transparent 60%);
+        radial-gradient(900px 600px at 20% 0%, rgba(83,219,198,.18), transparent 55%),
+        radial-gradient(800px 600px at 110% 30%, rgba(143,67,198,.16), transparent 60%),
+        radial-gradient(700px 500px at 60% 120%, rgba(104,164,206,.14), transparent 60%),
+        radial-gradient(600px 400px at 5% 80%, rgba(152,120,219,.1), transparent 55%);
     }
     [data-theme="light"] .badge{
       background:rgba(0,0,0,.06);
@@ -813,6 +832,9 @@
     [data-theme="light"] .nav-item:hover{ color:rgba(0,0,0,.8); }
     [data-theme="light"] .nav-item.active{ color:#53DBC6; }
     [data-theme="light"] .nav-item.active .nav-ico svg{ stroke:#53DBC6; }
+    [data-theme="light"] .glow-dot{
+      box-shadow:0 0 18px rgba(83,219,198,.4), 0 0 14px rgba(143,67,198,.3);
+    }
     [data-theme="light"] .toast{
       background:rgba(255,255,255,.95);
       border:1px solid rgba(0,0,0,.1);
@@ -849,7 +871,6 @@
           <p class="name" id="userName">Имя пользователя</p>
           <p class="level" id="userLevel">Уровень чувственных знаний: 1</p>
         </div>
-        <p class="sub" id="userSub">Психомагия — навигация по знаниям и путям</p>
       </div>
     </div>
   </div>
@@ -1126,34 +1147,34 @@
   }
 
   // =====================
-  // Profile: из Telegram или плейсхолдер
+  // Profile: из Telegram или плейсхолдер (Гость + инициал)
   // =====================
   var USER = {
-    name: 'Имя пользователя',
+    name: 'Гость',
     level: 7,
-    subtitle: 'Психомагия — навигация по знаниям и путям',
     avatarUrl: null,
-    initials: null
+    initials: 'Г'
   };
 
-  (function initUserFromTelegram() {
-    var u = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
+  function initUserFromTelegram() {
+    var tw = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+    var u = tw && tw.initDataUnsafe && tw.initDataUnsafe.user;
     if (u) {
-      USER.name = [u.first_name || '', (u.last_name || '').trim()].join(' ').trim() || USER.name;
+      USER.name = [u.first_name || '', (u.last_name || '').trim()].join(' ').trim() || 'Гость';
       USER.avatarUrl = u.photo_url || null;
-      if (!USER.avatarUrl && USER.name !== 'Имя пользователя') {
-        var first = (u.first_name || '').trim();
-        var last = (u.last_name || '').trim();
-        USER.initials = (first.charAt(0) + (last ? last.charAt(0) : first.charAt(1) || '')).toUpperCase().slice(0, 2);
-      }
+      var first = (u.first_name || '').trim();
+      var last = (u.last_name || '').trim();
+      USER.initials = (first.charAt(0) + (last ? last.charAt(0) : first.charAt(1) || '')).toUpperCase().slice(0, 2) || 'Г';
     }
-  })();
+  }
 
   function applyUser(){
-    $('#userName').textContent = USER.name;
-    $('#userLevel').textContent = 'Уровень чувственных знаний: ' + USER.level;
-    $('#userSub').textContent = USER.subtitle;
+    var nameEl = $('#userName');
+    var levelEl = $('#userLevel');
     var av = $('#avatar');
+    if (nameEl) nameEl.textContent = USER.name;
+    if (levelEl) levelEl.textContent = 'Уровень чувственных знаний: ' + USER.level;
+    if (!av) return;
     av.classList.remove('initials');
     av.textContent = '';
     av.style.backgroundImage = '';
@@ -1163,12 +1184,22 @@
       av.style.backgroundImage = 'url("' + USER.avatarUrl + '")';
       av.style.backgroundSize = 'cover';
       av.style.backgroundPosition = 'center';
-    } else if (USER.initials) {
+    } else {
       av.classList.add('initials');
-      av.textContent = USER.initials;
+      av.textContent = USER.initials || 'Г';
     }
   }
+
+  initUserFromTelegram();
   applyUser();
+  document.addEventListener('DOMContentLoaded', function() {
+    initUserFromTelegram();
+    applyUser();
+    setTimeout(function() {
+      initUserFromTelegram();
+      applyUser();
+    }, 300);
+  });
 
   // =====================
   // Favorites
@@ -1320,7 +1351,6 @@
       var cityHTML = city ? '<p class="review-city">' + escapeHTML(city) + '</p>' : '<p class="review-city" style="opacity:.0;">&nbsp;</p>';
       rhtml += ''
         + '<div class="review">'
-        +   '<div class="review-mark">💬</div>'
         +   '<div class="review-top">'
         +     '<p class="review-name">' + escapeHTML(it.name) + '</p>'
         +     cityHTML
