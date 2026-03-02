@@ -115,6 +115,17 @@
         radial-gradient(circle at 70% 65%, rgba(152,120,219,.22), transparent 58%);
       animation:sheen 7s var(--ease) infinite;
     }
+    .avatar.initials{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:16px;
+      font-weight:800;
+      letter-spacing:.5px;
+      color:rgba(255,255,255,.95);
+      text-transform:uppercase;
+    }
+    .avatar.initials:before{ opacity:.6; }
     @keyframes sheen{ 0%{transform:translate(0,0)} 50%{transform:translate(10px,-8px)} 100%{transform:translate(0,0)} }
 
     .profile{ flex:1; min-width:0; }
@@ -705,6 +716,7 @@
         radial-gradient(circle at 35% 25%, rgba(83,219,198,.25), transparent 55%),
         radial-gradient(circle at 70% 65%, rgba(152,120,219,.15), transparent 58%);
     }
+    [data-theme="light"] .avatar.initials{ color:rgba(0,0,0,.85); }
     [data-theme="light"] .level{
       color:rgba(0,0,0,.8);
       background:rgba(0,0,0,.05);
@@ -1114,24 +1126,46 @@
   }
 
   // =====================
-  // Profile placeholders
+  // Profile: из Telegram или плейсхолдер
   // =====================
   var USER = {
-    name: 'Искандер Джин',
+    name: 'Имя пользователя',
     level: 7,
-    subtitle: 'Навигация по системе Психомагии',
-    avatarUrl: null
+    subtitle: 'Психомагия — навигация по знаниям и путям',
+    avatarUrl: null,
+    initials: null
   };
+
+  (function initUserFromTelegram() {
+    var u = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
+    if (u) {
+      USER.name = [u.first_name || '', (u.last_name || '').trim()].join(' ').trim() || USER.name;
+      USER.avatarUrl = u.photo_url || null;
+      if (!USER.avatarUrl && USER.name !== 'Имя пользователя') {
+        var first = (u.first_name || '').trim();
+        var last = (u.last_name || '').trim();
+        USER.initials = (first.charAt(0) + (last ? last.charAt(0) : first.charAt(1) || '')).toUpperCase().slice(0, 2);
+      }
+    }
+  })();
 
   function applyUser(){
     $('#userName').textContent = USER.name;
     $('#userLevel').textContent = 'Уровень чувственных знаний: ' + USER.level;
     $('#userSub').textContent = USER.subtitle;
     var av = $('#avatar');
+    av.classList.remove('initials');
+    av.textContent = '';
+    av.style.backgroundImage = '';
+    av.style.backgroundSize = '';
+    av.style.backgroundPosition = '';
     if (USER.avatarUrl) {
       av.style.backgroundImage = 'url("' + USER.avatarUrl + '")';
       av.style.backgroundSize = 'cover';
       av.style.backgroundPosition = 'center';
+    } else if (USER.initials) {
+      av.classList.add('initials');
+      av.textContent = USER.initials;
     }
   }
   applyUser();
@@ -1402,37 +1436,7 @@
     navigate(back);
   });
 
-  // Swipe between tabs — только когда палец НЕ в зоне горизонтального скролла (карточки, отзывы, списки)
-  var touchX = null;
-  var touchStartedInHScroll = false;
-  function isInsideHorizontalScroll(el){
-    while (el && el !== document.body) {
-      if (el.classList && (el.classList.contains('cards-hscroll') || el.classList.contains('list-hscroll') || el.classList.contains('hscroll'))) return true;
-      el = el.parentElement;
-    }
-    return false;
-  }
-  document.addEventListener('touchstart', function(e){
-    if (!e.touches || !e.touches.length) return;
-    touchX = e.touches[0].clientX;
-    touchStartedInHScroll = isInsideHorizontalScroll(e.target);
-  }, { passive:true });
-
-  document.addEventListener('touchend', function(e){
-    if (touchX === null) return;
-    if (touchStartedInHScroll) { touchX = null; touchStartedInHScroll = false; return; }
-    var endX = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientX : null;
-    if (endX === null) { touchX = null; return; }
-    var dx = endX - touchX;
-    touchX = null;
-    if (Math.abs(dx) < 70) return;
-    if (['main','now','path','favs'].indexOf(state.route) < 0) return;
-    var tabs = ['main','now','path','favs'];
-    var idx = tabs.indexOf(state.route);
-    if (idx < 0) return;
-    if (dx < 0 && idx < tabs.length - 1) { navigate(tabs[idx+1]); toast('Перелистывание'); }
-    if (dx > 0 && idx > 0) { navigate(tabs[idx-1]); toast('Перелистывание'); }
-  }, { passive:true });
+  // Переключение табов только по нажатию на пункт таб-бара; свайп не переключает разделы
 
   // =====================
   // Entity open logic
