@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark light" />
+  <title>Психомагия — Telegram Mini App (прототип)</title>
+  <style>
+    /* Тема по умолчанию: тёмная. Светлая задаётся [data-theme="light"] на <html> из Telegram или системы. */
+    :root{
+      --bg:#06060a;
+      --panel: rgba(18,18,26,.72);
+      --panel2: rgba(22,22,32,.78);
+      --stroke: rgba(255,255,255,.08);
+      --stroke2: rgba(255,255,255,.12);
+      --text:#ffffff;
+      --muted: rgba(255,255,255,.70);
+      --muted2: rgba(255,255,255,.52);
+      /* Основная палитра: бирюзовый → синий → фиолетовый */
+      --accent1: #53DBC6;
+      --accent2: #68A4CE;
+      --accent3: #9878DB;
+      --accent1-light: #7ae5d8;
+      --shadow: 0 20px 60px rgba(0,0,0,.55);
+      --shadow2: 0 12px 30px rgba(0,0,0,.45);
+      --radius: 18px;
+      --radius2: 22px;
+      --ease: cubic-bezier(.2,.9,.2,1);
+    }
+    *{ box-sizing:border-box; }
+    html, body{ height:100%; background:var(--bg); background-color:var(--bg); }
+    html{ background:var(--bg); background-color:var(--bg); overscroll-behavior:none; }
+    /* Fix white overscroll / rubber band (особенно в WebView) */
+    body{ background-color:var(--bg); overscroll-behavior:none; overflow:hidden; }
+    @supports (-webkit-touch-callout: none){ body{ background-attachment: fixed; } }
+    body{
+      margin:0;
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+      font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Segoe UI",Roboto,sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 900px at 30% -10%, rgba(83,219,198,.2), transparent 55%),
+        radial-gradient(1100px 900px at 110% 10%, rgba(152,120,219,.18), transparent 55%),
+        radial-gradient(1000px 800px at 60% 120%, rgba(104,164,206,.15), transparent 60%),
+        linear-gradient(180deg, #040406 0%, #080812 55%, #06060a 100%);
+      overflow-x:hidden;
+    }
+    body:before{
+      content:"";
+      position:fixed;
+      inset:0;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E");
+      opacity:.08;
+      pointer-events:none;
+      mix-blend-mode:overlay;
+    }
+    .aurora{
+      position:fixed;
+      inset:-20vh -20vw;
+      pointer-events:none;
+      filter:blur(42px);
+      opacity:.8;
+      transform:translateZ(0);
+      z-index:0;
+    }
+    .aurora:before,.aurora:after{
+      content:"";
+      position:absolute;
+      width:60vw;height:60vw;
+      border-radius:999px;
+      background:
+        radial-gradient(circle at 30% 30%, rgba(83,219,198,.25), transparent 58%),
+        radial-gradient(circle at 70% 60%, rgba(152,120,219,.22), transparent 58%),
+        radial-gradient(circle at 55% 80%, rgba(104,164,206,.2), transparent 62%);
+      animation:floaty 12s var(--ease) infinite;
+    }
+    .aurora:after{ left:35vw; top:10vh; opacity:.75; animation-duration:15s; animation-direction:reverse; }
+    @keyframes floaty{ 0%{transform:translate(0,0) scale(1)} 50%{transform:translate(6vw,3vh) scale(1.05)} 100%{transform:translate(0,0) scale(1)} }
+
+    .app{
+      position:relative; z-index:1;
+      height:100vh;
+      overflow-y:auto;
+      -webkit-overflow-scrolling:touch;
+      overscroll-behavior: none;
+      background:transparent;
+      padding-bottom: calc(96px + env(safe-area-inset-bottom));
+    }
+
+    .topbar{
+      position:sticky; top:0; z-index:6;
+      padding-top: env(safe-area-inset-top);
+      backdrop-filter:blur(16px);
+      -webkit-backdrop-filter:blur(16px);
+      background:linear-gradient(180deg, rgba(6,6,10,.86) 0%, rgba(6,6,10,.68) 60%, rgba(6,6,10,0) 100%);
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    .topbar-inner{ max-width:560px; margin:0 auto; padding:14px 16px 12px; display:flex; align-items:center; gap:12px; }
+
+    .avatar{
+      width:44px;height:44px;
+      border-radius:16px;
+      background:linear-gradient(135deg, rgba(255,255,255,.10), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:var(--shadow2);
+      position:relative; overflow:hidden;
+      flex:0 0 auto;
+    }
+    .avatar:before{
+      content:"";
+      position:absolute; inset:-20px;
+      background:
+        radial-gradient(circle at 35% 25%, rgba(83,219,198,.35), transparent 55%),
+        radial-gradient(circle at 70% 65%, rgba(152,120,219,.22), transparent 58%);
+      animation:sheen 7s var(--ease) infinite;
+    }
+    @keyframes sheen{ 0%{transform:translate(0,0)} 50%{transform:translate(10px,-8px)} 100%{transform:translate(0,0)} }
+
+    .profile{ flex:1; min-width:0; }
+    .name-row{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+    .name{ margin:0; font-size:16px; font-weight:900; letter-spacing:.2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .level{
+      margin:0;
+      font-size:12px;
+      color:rgba(255,255,255,.82);
+      padding:7px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      white-space:nowrap;
+      flex:0 0 auto;
+    }
+    .sub{ margin:3px 0 0; font-size:12px; color:var(--muted2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:10px 12px;
+      min-height:44px;
+      border-radius:14px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      color:rgba(255,255,255,.92);
+      font-size:12px;
+      cursor:pointer; user-select:none;
+      transition:transform .2s var(--ease), background .2s var(--ease);
+      flex:0 0 auto;
+    }
+    .pill:hover{ transform:translateY(-1px); background:rgba(255,255,255,.075); }
+
+    .container{ max-width:560px; margin:0 auto; padding:16px; }
+
+    .section-title{
+      margin: 18px 2px 10px;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing:.35px;
+      color: rgba(255,255,255,.92);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .st-left{ display:flex; align-items:center; gap:10px; }
+    .st-ico{
+      width:28px; height:28px;
+      border-radius:12px;
+      display:inline-flex; align-items:center; justify-content:center;
+      background:rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow:0 12px 22px rgba(0,0,0,.20);
+      position:relative; overflow:hidden;
+      flex:0 0 auto;
+    }
+    .st-ico:before{
+      content:"";
+      position:absolute; inset:-22px;
+      background:
+        radial-gradient(circle at 30% 30%, rgba(83,219,198,.25), transparent 60%),
+        radial-gradient(circle at 70% 70%, rgba(104,164,206,.18), transparent 62%);
+      opacity:.85;
+    }
+    .st-ico > span{ position:relative; font-size:14px; opacity:.95; }
+    .st-note{ color:rgba(255,255,255,.55); font-weight:900; font-size:12px; }
+
+    .grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    /* Горизонтальный скролл блоков карточек — меньше шума, компактнее */
+    .cards-hscroll{
+      display:flex;
+      gap:12px;
+      overflow-x:auto;
+      padding:2px 2px 6px;
+      margin:0 -16px;
+      padding-left:16px;
+      padding-right:16px;
+      scroll-snap-type:x proximity;
+      -webkit-overflow-scrolling:touch;
+    }
+    .cards-hscroll::-webkit-scrollbar{ height:4px; }
+    .cards-hscroll::-webkit-scrollbar-track{ background:rgba(255,255,255,.04); border-radius:4px; }
+    .cards-hscroll::-webkit-scrollbar-thumb{ background:rgba(255,255,255,.15); border-radius:4px; }
+    .cards-hscroll .card{
+      flex:0 0 min(72%, 260px);
+      scroll-snap-align:start;
+      min-height:90px;
+    }
+    .card-wide{ min-height:auto !important; }
+    .list-hscroll{
+      display:flex;
+      gap:10px;
+      overflow-x:auto;
+      padding:2px 2px 6px;
+      margin:0 -16px;
+      padding-left:16px;
+      padding-right:16px;
+      scroll-snap-type:x proximity;
+      -webkit-overflow-scrolling:touch;
+      flex-direction:row;
+    }
+    .list-hscroll .tile{ flex:0 0 min(85%, 320px); scroll-snap-align:start; }
+
+    .card{
+      border-radius:var(--radius);
+      --tone: rgba(255,255,255,.12);
+      background:var(--panel);
+      border:1px solid var(--stroke);
+      padding:14px 14px 12px;
+      box-shadow:0 10px 24px rgba(0,0,0,.22);
+      cursor:pointer;
+      transition:transform .22s var(--ease), background .22s var(--ease), border-color .22s var(--ease);
+      position:relative; overflow:hidden;
+      min-height:96px;
+    }
+    .card:hover{ transform:translateY(-2px); border-color:rgba(255,255,255,.18); background:var(--panel2); }
+
+    /* Color tones per block — палитра градиента */
+    .card[data-tone="gold"]{ --tone: rgba(83,219,198,.22); }
+    .card[data-tone="purple"]{ --tone: rgba(152,120,219,.22); }
+    .card[data-tone="cyan"]{ --tone: rgba(104,164,206,.22); }
+    .card[data-tone="red"]{ --tone: rgba(255,74,110,.20); }
+    .card[data-tone="green"]{ --tone: rgba(83,219,198,.18); }
+
+    .card{ box-shadow:0 10px 24px rgba(0,0,0,.22), 0 0 0 1px rgba(255,255,255,.02); }
+    .card:before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        radial-gradient(760px 240px at 0% 0%, var(--tone), transparent 60%),
+        radial-gradient(700px 240px at 100% 100%, rgba(152,120,219,.12), transparent 62%),
+        radial-gradient(520px 260px at 70% 10%, rgba(255,255,255,.06), transparent 62%);
+      opacity:.92;
+      pointer-events:none;
+    }
+
+    /* Corner icon */
+    .card:after{
+      content: attr(data-ico);
+      position:absolute;
+      top:10px; right:10px;
+      width:30px; height:30px;
+      border-radius:12px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:14px;
+      color:rgba(255,255,255,.88);
+      background:rgba(0,0,0,.26);
+      border:1px solid rgba(255,255,255,.10);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 12px 22px rgba(0,0,0,.22);
+      opacity:.92;
+      pointer-events:none;
+    }
+    .card:not([data-ico]):after{ display:none; }
+
+    /* Prevent icon overlap with long titles */
+    .card-inner{ position:relative; padding-right:56px; }
+    .card h3{
+      margin:0 0 6px;
+      font-size:14px;
+      font-weight:900;
+      letter-spacing:.2px;
+      display:-webkit-box;
+      -webkit-line-clamp:2;
+      -webkit-box-orient:vertical;
+      overflow:hidden;
+    }
+    .card p{ margin:0; font-size:12px; color:rgba(255,255,255,.64); line-height:1.35; }
+
+    .chip{
+      margin-top:10px;
+      display:inline-flex; align-items:center; gap:6px;
+      padding:7px 10px;
+      border-radius:999px;
+      background:rgba(0,0,0,.24);
+      border:1px solid rgba(255,255,255,.10);
+      color:rgba(255,255,255,.80);
+      font-size:11px; letter-spacing:.2px;
+    }
+
+    .hero{
+      margin-top: 14px;
+      border-radius: var(--radius2);
+      background: linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
+      border: 1px solid rgba(255,255,255,.10);
+      overflow:hidden;
+      box-shadow: var(--shadow);
+      position:relative;
+    }
+    .hero:before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        radial-gradient(900px 600px at 20% 0%, rgba(83,219,198,.26), transparent 55%),
+        radial-gradient(800px 600px at 110% 30%, rgba(152,120,219,.22), transparent 60%),
+        radial-gradient(700px 500px at 60% 120%, rgba(104,164,206,.18), transparent 60%);
+      opacity:.95;
+    }
+    /* subtle watermark illustration */
+    .hero:after{
+      content:"";
+      position:absolute;
+      right:-18px; top:-18px;
+      width:160px; height:160px;
+      opacity:.22;
+      background-repeat:no-repeat;
+      background-size:contain;
+      pointer-events:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cdefs%3E%3CradialGradient id='g' cx='35%25' cy='35%25' r='70%25'%3E%3Cstop offset='0%25' stop-color='%2353DBC6' stop-opacity='.9'/%3E%3Cstop offset='55%25' stop-color='%2368A4CE' stop-opacity='.4'/%3E%3Cstop offset='100%25' stop-color='%239878DB' stop-opacity='.0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='102' cy='92' r='66' fill='url(%23g)'/%3E%3Cpath d='M40 120c30-34 92-34 122 0' fill='none' stroke='white' stroke-opacity='.35' stroke-width='4' stroke-linecap='round'/%3E%3Cpath d='M60 78c22 18 58 18 80 0' fill='none' stroke='white' stroke-opacity='.22' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E");
+    }
+
+    .hero-inner{ position:relative; padding:18px 18px 16px; }
+
+    .badge{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      background:rgba(0,0,0,.30);
+      border:1px solid rgba(255,255,255,.12);
+      color:rgba(255,255,255,.86);
+      font-size:12px; letter-spacing:.2px;
+    }
+    .glow-dot{
+      width:8px;height:8px;border-radius:999px;
+      background:linear-gradient(135deg, var(--accent1), var(--accent1-light));
+      box-shadow:0 0 18px rgba(83,219,198,.5);
+      animation:pulse 2.2s var(--ease) infinite;
+    }
+    @keyframes pulse{ 0%{transform:scale(1);opacity:1} 50%{transform:scale(1.18);opacity:.75} 100%{transform:scale(1);opacity:1} }
+
+    .hero-title{ margin:10px 0 0; font-size:19px; line-height:1.18; letter-spacing:.2px; font-weight:950; }
+    .hero-text{ margin:10px 0 0; color:rgba(255,255,255,.78); font-size:14px; line-height:1.45; }
+    .hero-compact .hero-inner{ padding:14px 16px 12px; }
+    .hero-compact .hero-title{ font-size:17px; margin-top:8px; }
+    .hero-compact .hero-text{ font-size:13px; margin-top:6px; -webkit-line-clamp:2; display:-webkit-box; -webkit-box-orient:vertical; overflow:hidden; }
+    .hero-compact .cta-row{ margin-top:12px; }
+
+    .cta-row{ margin-top:14px; display:flex; gap:10px; flex-wrap:wrap; }
+    .btn{
+      border:none; outline:none; cursor:pointer; user-select:none;
+      padding:12px 14px; border-radius:16px;
+      font-weight:900; font-size:13px;
+      transition:transform .2s var(--ease), filter .2s var(--ease), background .2s var(--ease);
+      display:inline-flex; align-items:center; gap:10px;
+    }
+    .btn:active{ transform:translateY(1px) scale(.99); }
+    .btn-primary{
+      color:#040406;
+      background:linear-gradient(135deg, var(--accent1), var(--accent1-light));
+      box-shadow:0 14px 32px rgba(83,219,198,.25);
+      position:relative; overflow:hidden;
+    }
+    .btn-primary:before{
+      content:"";
+      position:absolute; inset:-40px;
+      background:radial-gradient(circle at 30% 30%, rgba(255,255,255,.55), transparent 45%);
+      opacity:.22; transform:translateX(-20px);
+    }
+    .btn-secondary{
+      color:rgba(255,255,255,.92);
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+    }
+
+    .icon{ width:18px;height:18px; display:inline-flex; align-items:center; justify-content:center; opacity:.9; }
+
+    /* Views */
+    .view{ display:none; animation:fadeIn .28s var(--ease) both; }
+    .view.active{ display:block; }
+    @keyframes fadeIn{ from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:translateY(0)} }
+
+    .backrow{ display:flex; align-items:center; gap:10px; margin:10px 0 12px; }
+    .backbtn{
+      display:inline-flex; align-items:center; gap:10px;
+      padding:10px 12px;
+      min-height:44px;
+      border-radius:14px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      color:rgba(255,255,255,.90);
+      font-size:12px;
+      cursor:pointer;
+      transition:transform .2s var(--ease), background .2s var(--ease);
+    }
+    .backbtn:hover{ transform:translateY(-1px); background:rgba(255,255,255,.075); }
+
+    .page-title{ margin:0; font-size:18px; font-weight:950; letter-spacing:.2px; }
+
+    /* Testimonials */
+    .hscroll{
+      display:flex;
+      gap:12px;
+      overflow-x:auto;
+      padding: 2px 2px 4px;
+      scroll-snap-type:x mandatory;
+      -webkit-overflow-scrolling:touch;
+    }
+    .hscroll::-webkit-scrollbar{ height:0; }
+    .review{
+      flex: 0 0 min(86%, 420px);
+      scroll-snap-align:start;
+      border-radius: 22px;
+      background: rgba(18,18,26,.74);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 16px 40px rgba(0,0,0,.38);
+      padding: 14px 14px 12px;
+      position:relative;
+      overflow:hidden;
+    }
+    .review:before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        radial-gradient(820px 360px at 0% 0%, rgba(83,219,198,.2), transparent 60%),
+        radial-gradient(820px 360px at 100% 100%, rgba(152,120,219,.16), transparent 62%),
+        radial-gradient(520px 260px at 70% 10%, rgba(104,164,206,.08), transparent 62%);
+      opacity:.92;
+      pointer-events:none;
+    }
+    .review-top{ position:relative; display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+    .review-name{ margin:0; font-size:13px; font-weight:950; letter-spacing:.2px; }
+    .review-city{ margin:0; font-size:12px; color:rgba(255,255,255,.62); font-weight:800; white-space:nowrap; }
+    .review-text{ position:relative; margin:10px 0 0; font-size:13px; line-height:1.5; color:rgba(255,255,255,.78); white-space:pre-wrap; }
+    .review-mark{
+      position:absolute;
+      top:10px; right:10px;
+      width:30px; height:30px;
+      border-radius:12px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:14px;
+      color:rgba(255,255,255,.88);
+      background:rgba(0,0,0,.26);
+      border:1px solid rgba(255,255,255,.10);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 12px 22px rgba(0,0,0,.22);
+      opacity:.92;
+      pointer-events:none;
+    }
+
+    /* Tiles (lists) */
+    .list{ display:flex; flex-direction:column; gap:10px; }
+    .tile{
+      border-radius:18px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      padding:14px;
+      display:flex; gap:12px; align-items:flex-start;
+      cursor:pointer;
+      transition:transform .22s var(--ease), background .22s var(--ease), border-color .22s var(--ease);
+    }
+    .tile:hover{ transform:translateY(-2px); background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.14); }
+    .tile-icon{
+      width:38px;height:38px;
+      border-radius:14px;
+      background:rgba(0,0,0,.28);
+      border:1px solid rgba(255,255,255,.10);
+      display:flex; align-items:center; justify-content:center;
+      flex:0 0 auto;
+      position:relative; overflow:hidden;
+    }
+    .tile-icon:before{
+      content:"";
+      position:absolute; inset:-20px;
+      background:
+        radial-gradient(circle at 30% 30%, rgba(83,219,198,.22), transparent 58%),
+        radial-gradient(circle at 70% 70%, rgba(104,164,206,.15), transparent 60%);
+      opacity:.85;
+    }
+    .tile-main{ flex:1; min-width:0; }
+    .tile-title{ margin:0; font-size:13px; font-weight:950; letter-spacing:.2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .tile-sub{ margin:6px 0 0; font-size:12px; color:rgba(255,255,255,.62); line-height:1.35; }
+    .tile-actions{ display:flex; flex-direction:column; gap:8px; align-items:flex-end; }
+    .fav{
+      width:34px;height:34px;
+      border-radius:14px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      display:flex; align-items:center; justify-content:center;
+      transition:transform .2s var(--ease), background .2s var(--ease), border-color .2s var(--ease);
+    }
+    .fav:hover{ transform:translateY(-1px); background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.14); }
+    .fav.on{ background:rgba(83,219,198,.2); border-color:rgba(83,219,198,.4); box-shadow:0 0 18px rgba(83,219,198,.22); }
+
+    /* Bottom nav — меню (таб-бар), не раздел */
+    .bottom-nav{
+      position:fixed; left:0; right:0; bottom:0; z-index:7;
+      padding:8px 0 calc(8px + env(safe-area-inset-bottom));
+      background:rgba(6,6,10,.94);
+      backdrop-filter:blur(20px);
+      -webkit-backdrop-filter:blur(20px);
+      border-top:1px solid rgba(255,255,255,.06);
+      box-shadow:0 -4px 24px rgba(0,0,0,.25);
+    }
+    .nav{ max-width:560px; margin:0 auto; display:flex; justify-content:space-around; align-items:stretch; gap:0; padding:0 8px; }
+    .nav-item{
+      position:relative;
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:4px;
+      padding:10px 6px;
+      min-height:52px;
+      color:rgba(255,255,255,.55);
+      font-size:11px;
+      font-weight:700;
+      letter-spacing:.1px;
+      text-align:center;
+      cursor:pointer;
+      border:none;
+      background:transparent;
+      border-radius:0;
+      transition:color .2s var(--ease);
+      user-select:none;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .nav-item:hover{ color:rgba(255,255,255,.85); }
+    .nav-item.active{
+      color:var(--accent1-light);
+      background:transparent;
+      box-shadow:none;
+    }
+    .nav-item.active::before{
+      content:"";
+      position:absolute;
+      top:0;
+      left:50%;
+      transform:translateX(-50%);
+      width:28px;
+      height:3px;
+      border-radius:0 0 3px 3px;
+      background:linear-gradient(90deg, var(--accent1), var(--accent3));
+    }
+
+    /* Toast */
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:98px;
+      transform:translateX(-50%);
+      padding:12px 14px;
+      border-radius:16px;
+      background:rgba(0,0,0,.62);
+      border:1px solid rgba(255,255,255,.10);
+      color:rgba(255,255,255,.88);
+      font-size:12px;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .25s var(--ease), transform .25s var(--ease);
+      max-width:86vw;
+      box-shadow:0 12px 30px rgba(0,0,0,.35);
+      backdrop-filter:blur(14px);
+      -webkit-backdrop-filter:blur(14px);
+      z-index:10;
+      font-weight:800;
+      letter-spacing:.1px;
+    }
+    .toast.show{ opacity:1; transform:translateX(-50%) translateY(-4px); }
+
+    /* Preview modal */
+    .modal{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background:rgba(0,0,0,.55);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      z-index:20;
+      padding:20px;
+    }
+    .modal.show{ display:flex; }
+    .modal-card{
+      width:min(640px, 96vw);
+      border-radius:22px;
+      background:rgba(18,18,26,.86);
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow:0 30px 80px rgba(0,0,0,.6);
+      overflow:hidden;
+    }
+    .modal-head{
+      padding:14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+    }
+    .modal-title{ margin:0; font-size:13px; font-weight:950; letter-spacing:.25px; }
+    .modal-body{ padding:14px 16px 18px; color:rgba(255,255,255,.78); font-size:13px; line-height:1.5; }
+    .k{ color:rgba(255,255,255,.92); font-weight:900; }
+
+    /* Мобильная адаптация */
+    @media (max-width: 480px){
+      .container{ padding:12px 14px; }
+      .topbar-inner{ padding:12px 14px 10px; }
+      .section-title{ margin:12px 2px 8px; font-size:12px; }
+      .cards-hscroll{ margin:0 -14px; padding-left:14px; padding-right:14px; }
+      .cards-hscroll .card{ flex:0 0 min(78%, 240px); min-height:86px; }
+      .list-hscroll{ margin:0 -14px; padding-left:14px; padding-right:14px; }
+      .list-hscroll .tile{ flex:0 0 min(88%, 300px); min-width:260px; }
+      .hero-compact .hero-inner{ padding:12px 14px 10px; }
+      .btn{ padding:11px 12px; min-height:44px; font-size:12px; }
+      .nav-item{ min-height:48px; padding:8px 4px; font-size:10px; }
+      .bottom-nav{ padding:6px 0 calc(6px + env(safe-area-inset-bottom)); }
+      .app{ padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
+    }
+    @media (prefers-reduced-motion: reduce){
+      *{ animation:none !important; transition:none !important; }
+    }
+
+    /* ========== Светлая тема (Telegram или система) ========== */
+    [data-theme="light"]{
+      --bg: #f4f4f5;
+      --panel: rgba(255,255,255,.92);
+      --panel2: rgba(255,255,255,.98);
+      --stroke: rgba(0,0,0,.08);
+      --stroke2: rgba(0,0,0,.12);
+      --text: #1c1c1e;
+      --muted: rgba(0,0,0,.72);
+      --muted2: rgba(0,0,0,.55);
+      --shadow: 0 20px 60px rgba(0,0,0,.1);
+      --shadow2: 0 12px 30px rgba(0,0,0,.08);
+    }
+    [data-theme="light"] body{
+      background:
+        radial-gradient(1200px 900px at 30% -10%, rgba(83,219,198,.12), transparent 55%),
+        radial-gradient(1100px 900px at 110% 10%, rgba(152,120,219,.1), transparent 55%),
+        radial-gradient(1000px 800px at 60% 120%, rgba(104,164,206,.1), transparent 60%),
+        linear-gradient(180deg, #e8e8ec 0%, #f0f0f2 55%, #f4f4f5 100%);
+    }
+    [data-theme="light"] body:before{ opacity:.04; }
+    [data-theme="light"] .aurora:before,
+    [data-theme="light"] .aurora:after{
+      background:
+        radial-gradient(circle at 30% 30%, rgba(83,219,198,.15), transparent 58%),
+        radial-gradient(circle at 70% 60%, rgba(152,120,219,.12), transparent 58%),
+        radial-gradient(circle at 55% 80%, rgba(104,164,206,.12), transparent 62%);
+    }
+    [data-theme="light"] .topbar{
+      background:linear-gradient(180deg, rgba(244,244,245,.92) 0%, rgba(244,244,245,.75) 60%, rgba(244,244,245,0) 100%);
+      border-bottom:1px solid rgba(0,0,0,.06);
+    }
+    [data-theme="light"] .avatar{
+      background:linear-gradient(135deg, rgba(0,0,0,.06), rgba(0,0,0,.02));
+      border:1px solid rgba(0,0,0,.1);
+    }
+    [data-theme="light"] .avatar:before{
+      background:
+        radial-gradient(circle at 35% 25%, rgba(83,219,198,.25), transparent 55%),
+        radial-gradient(circle at 70% 65%, rgba(152,120,219,.15), transparent 58%);
+    }
+    [data-theme="light"] .level{
+      color:rgba(0,0,0,.8);
+      background:rgba(0,0,0,.05);
+      border:1px solid rgba(0,0,0,.08);
+    }
+    [data-theme="light"] .pill{
+      background:rgba(0,0,0,.05);
+      border:1px solid rgba(0,0,0,.08);
+      color:var(--text);
+    }
+    [data-theme="light"] .pill:hover{ background:rgba(0,0,0,.08); }
+    [data-theme="light"] .section-title{ color:rgba(0,0,0,.9); }
+    [data-theme="light"] .st-ico{
+      background:rgba(0,0,0,.06);
+      border:1px solid rgba(0,0,0,.08);
+    }
+    [data-theme="light"] .st-ico:before{
+      background:
+        radial-gradient(circle at 30% 30%, rgba(83,219,198,.2), transparent 60%),
+        radial-gradient(circle at 70% 70%, rgba(104,164,206,.15), transparent 62%);
+    }
+    [data-theme="light"] .st-note{ color:rgba(0,0,0,.5); }
+    [data-theme="light"] .card{
+      border-color:var(--stroke);
+      box-shadow:0 10px 24px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.02);
+    }
+    [data-theme="light"] .card:hover{ border-color:rgba(0,0,0,.14); background:var(--panel2); }
+    [data-theme="light"] .card:after{ color:rgba(0,0,0,.85); background:rgba(0,0,0,.06); border:1px solid rgba(0,0,0,.1); }
+    [data-theme="light"] .card p{ color:rgba(0,0,0,.6); }
+    [data-theme="light"] .chip{
+      background:rgba(0,0,0,.06);
+      border:1px solid rgba(0,0,0,.08);
+      color:rgba(0,0,0,.72);
+    }
+    [data-theme="light"] .hero{
+      background:linear-gradient(135deg, rgba(255,255,255,.7), rgba(255,255,255,.5));
+      border:1px solid rgba(0,0,0,.08);
+    }
+    [data-theme="light"] .hero:before{
+      background:
+        radial-gradient(900px 600px at 20% 0%, rgba(83,219,198,.15), transparent 55%),
+        radial-gradient(800px 600px at 110% 30%, rgba(152,120,219,.12), transparent 60%),
+        radial-gradient(700px 500px at 60% 120%, rgba(104,164,206,.1), transparent 60%);
+    }
+    [data-theme="light"] .badge{
+      background:rgba(0,0,0,.06);
+      border:1px solid rgba(0,0,0,.1);
+      color:var(--text);
+    }
+    [data-theme="light"] .hero-text{ color:rgba(0,0,0,.7); }
+    [data-theme="light"] .btn-secondary{
+      color:var(--text);
+      background:rgba(0,0,0,.06);
+      border:1px solid rgba(0,0,0,.1);
+    }
+    [data-theme="light"] .backbtn{
+      background:rgba(0,0,0,.05);
+      border:1px solid rgba(0,0,0,.08);
+      color:var(--text);
+    }
+    [data-theme="light"] .backbtn:hover{ background:rgba(0,0,0,.08); }
+    [data-theme="light"] .page-title{ color:var(--text); }
+    [data-theme="light"] .review{
+      background:rgba(255,255,255,.85);
+      border:1px solid rgba(0,0,0,.08);
+      box-shadow:0 16px 40px rgba(0,0,0,.12);
+    }
+    [data-theme="light"] .review-name{ color:var(--text); }
+    [data-theme="light"] .review-city{ color:rgba(0,0,0,.55); }
+    [data-theme="light"] .review-text{ color:rgba(0,0,0,.7); }
+    [data-theme="light"] .review-mark{ background:rgba(0,0,0,.06); border:1px solid rgba(0,0,0,.08); color:var(--text); }
+    [data-theme="light"] .tile{
+      background:rgba(0,0,0,.04);
+      border:1px solid rgba(0,0,0,.08);
+    }
+    [data-theme="light"] .tile:hover{ background:rgba(0,0,0,.06); border-color:rgba(0,0,0,.12); }
+    [data-theme="light"] .tile-title{ color:var(--text); }
+    [data-theme="light"] .tile-sub{ color:rgba(0,0,0,.55); }
+    [data-theme="light"] .tile-icon{
+      background:rgba(0,0,0,.06);
+      border:1px solid rgba(0,0,0,.08);
+    }
+    [data-theme="light"] .fav{
+      background:rgba(0,0,0,.04);
+      border:1px solid rgba(0,0,0,.08);
+    }
+    [data-theme="light"] .fav:hover{ background:rgba(0,0,0,.06); border-color:rgba(0,0,0,.12); }
+    [data-theme="light"] .bottom-nav{
+      background:rgba(244,244,245,.96);
+      border-top:1px solid rgba(0,0,0,.06);
+      box-shadow:0 -4px 24px rgba(0,0,0,.06);
+    }
+    [data-theme="light"] .nav-item{ color:rgba(0,0,0,.55); }
+    [data-theme="light"] .nav-item:hover{ color:rgba(0,0,0,.85); }
+    [data-theme="light"] .nav-item.active{ color:var(--accent3); }
+    [data-theme="light"] .toast{
+      background:rgba(255,255,255,.95);
+      border:1px solid rgba(0,0,0,.1);
+      color:var(--text);
+      box-shadow:0 12px 30px rgba(0,0,0,.2);
+    }
+    [data-theme="light"] .modal{ background:rgba(0,0,0,.35); }
+    [data-theme="light"] .modal-card{
+      background:rgba(255,255,255,.98);
+      border:1px solid rgba(0,0,0,.1);
+      box-shadow:0 30px 80px rgba(0,0,0,.25);
+    }
+    [data-theme="light"] .modal-head{
+      border-bottom:1px solid rgba(0,0,0,.08);
+      background:linear-gradient(180deg, rgba(0,0,0,.03), rgba(0,0,0,.02));
+    }
+    [data-theme="light"] .modal-title{ color:var(--text); }
+    [data-theme="light"] .modal-body{ color:rgba(0,0,0,.75); }
+    [data-theme="light"] .k{ color:var(--text); }
+    [data-theme="light"] .cards-hscroll::-webkit-scrollbar-track{ background:rgba(0,0,0,.06); }
+    [data-theme="light"] .cards-hscroll::-webkit-scrollbar-thumb{ background:rgba(0,0,0,.2); }
+  </style>
+</head>
+<body>
+<div class="aurora"></div>
+
+<div class="app">
+  <!-- TOP PROFILE BAR -->
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="avatar" id="avatar" title="Фото пользователя" aria-label="Фото пользователя"></div>
+      <div class="profile">
+        <div class="name-row">
+          <p class="name" id="userName">Имя пользователя</p>
+          <p class="level" id="userLevel">Уровень чувственных знаний: 1</p>
+        </div>
+        <p class="sub" id="userSub">Психомагия — навигация по знаниям и путям</p>
+      </div>
+      <div class="pill" id="btnPreview" title="Предпросмотр">
+        <span class="icon">◎</span>
+        <span>Предпросмотр</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- VIEW: Главное -->
+    <section class="view active" id="view-main">
+      <div class="hero hero-compact">
+        <div class="hero-inner">
+          <span class="badge"><span class="glow-dot"></span> База Психомагии</span>
+          <h2 class="hero-title">Система, с которой начинается ясность.</h2>
+          <p class="hero-text">Вход в основу философии и ключевые материалы.</p>
+          <div class="cta-row">
+            <button class="btn btn-primary" id="btnBase"><span class="icon">✦</span><span>База</span></button>
+            <button class="btn btn-secondary" id="btnKeyVideos"><span class="icon">▶</span><span>Видео</span></button>
+            <button class="btn btn-primary" id="btnJoinFieldTop"><span class="icon">✺</span><span>Поле</span></button>
+            <button class="btn btn-secondary" id="btnWhyFieldTop"><span class="icon">◎</span><span>Что даёт Поле</span></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title" style="margin-top:12px;"><span class="st-left"><span class="st-ico"><span>🌌</span></span>Карта Вселенной</span><span class="st-note">ориентир</span></div>
+      <div class="cards-hscroll">
+        <div class="card" data-route="now" data-tone="gold" data-ico="🔎"><div class="card-inner"><h3>Познать себя</h3><p>Ваша точка «сейчас»</p><span class="chip">Я сейчас</span></div></div>
+        <div class="card" data-route="path" data-tone="purple" data-ico="🧭"><div class="card-inner"><h3>Найти путь</h3><p>Карта уровней</p><span class="chip">Мой путь</span></div></div>
+        <div class="card" data-open="field" data-tone="cyan" data-ico="✺"><div class="card-inner"><h3>Поле Психомагии</h3><p>Доступ и поддержка</p><span class="chip">центр</span></div></div>
+        <div class="card" data-open="program_formula" data-tone="gold" data-ico="✦"><div class="card-inner"><h3>Формула счастья</h3><p>Ядро философии</p><span class="chip">старт</span></div></div>
+      </div>
+
+      <div class="section-title" style="margin-top:12px;"><span class="st-left"><span class="st-ico"><span>✨</span></span>Сегодня в Поле</span><span class="st-note">живое</span></div>
+      <div class="list list-hscroll" id="todayField"></div>
+
+      <div class="section-title" style="margin-top:12px;"><span class="st-left"><span class="st-ico"><span>🗝</span></span>Персональные ключи</span><span class="st-note">интуиция</span></div>
+      <div class="cards-hscroll">
+        <div class="card" data-open="my_archetype" data-tone="gold" data-ico="🃏"><div class="card-inner"><h3>Мой архетип</h3><p>Колода карт</p><span class="chip">колода</span></div></div>
+        <div class="card" data-open="my_totem" data-tone="green" data-ico="🜃"><div class="card-inner"><h3>Тотемное животное</h3><p>Символ силы</p><span class="chip">тотем</span></div></div>
+        <div class="card" data-open="my_power_place" data-tone="cyan" data-ico="⛰"><div class="card-inner"><h3>Место силы</h3><p>Где раскрываетесь</p><span class="chip">пространство</span></div></div>
+        <div class="card" data-open="my_destiny_partner" data-tone="red" data-ico="∞"><div class="card-inner"><h3>Партнёр по судьбе</h3><p>Судьбоносные отношения</p><span class="chip">отношения</span></div></div>
+        <div class="card" data-open="my_crystallinity_level" data-tone="cyan" data-ico="◇"><div class="card-inner"><h3>Уровень кристальности</h3><p>Чистота намерения</p><span class="chip">кристальность</span></div></div>
+        <div class="card" data-open="my_purpose" data-tone="purple" data-ico="✦"><div class="card-inner"><h3>Моё предназначение</h3><p>Направление жизни</p><span class="chip">миссия</span></div></div>
+        <div class="card" data-open="my_superpowers" data-tone="gold" data-ico="⚡"><div class="card-inner"><h3>Сверхспособности</h3><p>Интуиция, ясность</p><span class="chip">дар</span></div></div>
+        <div class="card" data-open="shop" data-tone="gold" data-ico="⟡"><div class="card-inner"><h3>Магазин</h3><p>Артефакты, книги</p><span class="chip">магазин</span></div></div>
+      </div>
+
+      <div class="section-title" style="margin-top:12px;"><span class="st-left"><span class="st-ico"><span>✦</span></span>Базовая программа</span><span class="st-note">старт</span></div>
+      <div class="card card-wide" data-open="program_formula" data-tone="gold" data-ico="✦">
+        <div class="card-inner"><h3>Формула счастья</h3><p>Ядро философии и основа пути.</p><span class="chip">программа</span></div>
+      </div>
+
+      <div class="section-title" style="margin-top:12px;"><span class="st-left"><span class="st-ico"><span>🗺</span></span>Карта мастеров</span><span class="st-note">люди</span></div>
+      <div class="card card-wide" data-open="masters_map" data-tone="purple" data-ico="🗺">
+        <div class="card-inner"><h3>Карта мастеров</h3><p>Кто рядом, чем занимается.</p><span class="chip">карта</span></div>
+      </div>
+
+      <div class="section-title" style="margin-top:12px;"><span class="st-left"><span class="st-ico"><span>💬</span></span>Отзывы</span><span class="st-note">живые слова</span></div>
+      <div class="hscroll" id="reviewsList"></div>
+
+      <div class="section-title" style="margin-top:12px;"><span class="st-left"><span class="st-ico"><span>⟡</span></span>События</span><span class="st-note">живое</span></div>
+      <div class="cards-hscroll">
+        <div class="card" data-open="marathons" data-tone="gold" data-ico="⌁"><div class="card-inner"><h3>Марафоны</h3><p>Погружения</p><span class="chip">марафон</span></div></div>
+        <div class="card" data-open="retreats" data-tone="cyan" data-ico="☾"><div class="card-inner"><h3>Ретриты</h3><p>Онлайн</p><span class="chip">ретрит</span></div></div>
+        <div class="card" data-open="meetups" data-tone="red" data-ico="❤"><div class="card-inner"><h3>Встречи</h3><p>Вживую</p><span class="chip">встречи</span></div></div>
+        <div class="card" data-open="messages" data-tone="purple" data-ico="✺"><div class="card-inner"><h3>Послания</h3><p>Тексты ясности</p><span class="chip">послания</span></div></div>
+      </div>
+    </section>
+
+    <!-- VIEW: Диагностики -->
+    <section class="view" id="view-now">
+      <div class="backrow">
+        <button class="backbtn" data-route="main"><span class="icon">←</span><span>Назад</span></button>
+        <h2 class="page-title">Я сейчас</h2>
+      </div>
+
+      <div class="hero hero-compact">
+        <div class="hero-inner">
+          <span class="badge"><span class="glow-dot"></span> Познать себя</span>
+          <h2 class="hero-title">Ваша точка «сейчас».</h2>
+          <p class="hero-text">Тесты доступны сразу; глубинные расшифровки — в Поле.</p>
+          <div class="cta-row">
+            <button class="btn btn-primary" id="btnJoinField"><span class="icon">✦</span><span>Поле</span></button>
+            <button class="btn btn-secondary" id="btnWhyField"><span class="icon">◎</span><span>Зачем Поле</span></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title"><span class="st-left"><span class="st-ico"><span>🧪</span></span>Быстрые тесты</span><span class="st-note">вход</span></div>
+      <div class="cards-hscroll">
+        <div class="card" data-open="test_happiness" data-tone="gold" data-ico="☼"><div class="card-inner"><h3>Тест счастья</h3><p>В боте Telegram</p><span class="chip">бот</span></div></div>
+        <div class="card" data-open="test_libido" data-tone="red" data-ico="❤"><div class="card-inner"><h3>Тест либидо</h3><p>Уровень энергии</p><span class="chip">бот</span></div></div>
+        <div class="card" data-open="test_crystal" data-tone="cyan" data-ico="✧"><div class="card-inner"><h3>Тест кристальности</h3><p>Чистота и ясность</p><span class="chip">бот</span></div></div>
+        <div class="card" data-open="test_personality" data-tone="purple" data-ico="◈"><div class="card-inner"><h3>Диагностика личности</h3><p>Профиль</p><span class="chip">бот</span></div></div>
+      </div>
+
+      <div class="section-title"><span class="st-left"><span class="st-ico"><span>🔎</span></span>Глубинные диагностики</span><span class="st-note">в Поле</span></div>
+      <div class="list list-hscroll" id="diagList"></div>
+    </section>
+
+    <!-- VIEW: Путь психомагии -->
+    <section class="view" id="view-path">
+      <div class="backrow">
+        <button class="backbtn" data-route="main"><span class="icon">←</span><span>Назад</span></button>
+        <h2 class="page-title">Путь психомагии</h2>
+      </div>
+
+      <div class="hero hero-compact">
+        <div class="hero-inner">
+          <span class="badge"><span class="glow-dot"></span> Карта эволюции</span>
+          <h2 class="hero-title">Путь духовного роста.</h2>
+          <p class="hero-text">Уровни, последовательность курсов и единицы мудрости.</p>
+          <div class="cta-row">
+            <button class="btn btn-primary" id="btnEvolution"><span class="icon">✦</span><span>Карта</span></button>
+            <button class="btn btn-secondary" id="btnCourses"><span class="icon">◈</span><span>Курсы</span></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title"><span>Библиотека</span><span class="st-note">ресурсы</span></div>
+      <div class="cards-hscroll">
+        <div class="card" data-open="techniques" data-tone="gold" data-ico="⟡"><div class="card-inner"><h3>Техники</h3><p>Действия для изменений</p><span class="chip">техники</span></div></div>
+        <div class="card" data-open="practices" data-tone="cyan" data-ico="◎"><div class="card-inner"><h3>Практики</h3><p>Регулярная настройка</p><span class="chip">практики</span></div></div>
+        <div class="card" data-open="books" data-tone="purple" data-ico="⌁"><div class="card-inner"><h3>Книги</h3><p>Текст, аудио</p><span class="chip">книги</span></div></div>
+        <div class="card" data-open="field" data-tone="gold" data-ico="✺"><div class="card-inner"><h3>Поле</h3><p>Подписка и формат</p><span class="chip">Поле</span></div></div>
+      </div>
+
+      <div class="section-title" style="margin-top:12px;"><span>Навигация</span><span class="st-note">карта</span></div>
+      <div class="list list-hscroll" id="pathList"></div>
+    </section>
+
+    <!-- VIEW: экран материала (универсальный) -->
+    <section class="view" id="view-item">
+      <div class="backrow">
+        <button class="backbtn" id="btnBack"><span class="icon">←</span><span>Назад</span></button>
+        <h2 class="page-title" id="itemTitle">Раздел</h2>
+      </div>
+
+      <div class="hero hero-compact">
+        <div class="hero-inner">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span class="badge" id="itemBadge"><span class="glow-dot"></span> Психомагия</span>
+            <span class="badge" id="itemTag">раздел</span>
+          </div>
+          <h2 class="hero-title" id="itemHeadline">…</h2>
+          <p class="hero-text" id="itemText">…</p>
+          <div class="cta-row">
+            <button class="btn btn-primary" id="itemOpen"><span class="icon">↗</span><span>Открыть</span></button>
+            <button class="btn btn-secondary" id="itemFav"><span class="icon">❤</span><span>В Избранное</span></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title"><span>Содержание</span><span class="st-note">плейсхолдер</span></div>
+      <div class="list" id="itemContent"></div>
+    </section>
+
+    <!-- VIEW: Избранное -->
+    <section class="view" id="view-favs">
+      <div class="backrow">
+        <button class="backbtn" data-route="main"><span class="icon">←</span><span>Назад</span></button>
+        <h2 class="page-title">Избранное</h2>
+      </div>
+      <div class="list" id="favList"></div>
+      <div id="favEmpty" style="display:none; margin-top:10px; color:rgba(255,255,255,.62); font-size:13px; line-height:1.45;">
+        Пока здесь пусто. Сохраняйте разделы и материалы по сердцу.
+      </div>
+    </section>
+  </div>
+
+  <!-- Bottom nav (3 tabs) -->
+  <div class="bottom-nav">
+    <div class="nav">
+      <div class="nav-item active" data-route="main">Главное</div>
+      <div class="nav-item" data-route="now">Диагностики</div>
+      <div class="nav-item" data-route="path">Путь психомагии</div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Готово</div>
+</div>
+
+<!-- Preview modal -->
+<div class="modal" id="modal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <p class="modal-title">Предпросмотр прототипа</p>
+      <div class="pill" id="btnClose"><span class="icon">✕</span><span>Закрыть</span></div>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+        <button class="btn btn-primary" id="btnCopy"><span class="icon">⧉</span><span>Скопировать HTML</span></button>
+        <button class="btn btn-secondary" id="btnHow"><span class="icon">◎</span><span>Как открыть</span></button>
+        <button class="btn btn-secondary" id="btnFavs"><span class="icon">❤</span><span>Избранное</span></button>
+      </div>
+      <div id="howText" style="display:none;">
+        <div class="k">Как открыть и проверить тему:</div>
+        1) Локально: сохраните как <span class="k">miniapp.html</span> и откройте в браузере. <br/>
+        2) Тема на компьютере: Chrome → F12 → ⋮ → More tools → Rendering → «Emulate CSS media feature prefers-color-scheme» → light или dark. <br/>
+        3) GitHub Pages: загрузите репозиторий на GitHub, в настройках репо включите Pages (Source: main, /root). Ссылка будет <span class="k">https://ВАШ_ЛОГИН.github.io/ИМЯ_РЕПО/</span> (для index.html можно не писать в URL). <br/>
+        4) В Telegram: создайте бота (@BotFather), в кнопке меню укажите type: web_app, url: ваша ссылка с GitHub Pages. Откройте мини-приложение из бота — тема подстроится под тёмную/светлую тему в настройках Telegram (Настройки → Тема оформления). <br/>
+        5) Проверка темы по ссылке: откройте <span class="k">?theme=light</span> или <span class="k">?theme=dark</span> в конце URL, чтобы принудительно выбрать тему (например, на GitHub Pages: .../index.html?theme=light).
+      </div>
+      <div style="margin-top:10px;">
+        Здесь всё собрано в структуру, которую вы надиктовали. Ссылки пока плейсхолдеры — подключим реальные.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // =====================
+  // Boot (Telegram WebApp) + тема (тёмная/светлая)
+  // =====================
+  var tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
+
+  function getTheme() {
+    if (location.search.indexOf('theme=light') !== -1) return 'light';
+    if (location.search.indexOf('theme=dark') !== -1) return 'dark';
+    if (tg && tg.colorScheme) return tg.colorScheme; // "light" | "dark" в Telegram
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  }
+  function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    if (tg) {
+      try {
+        var bg = theme === 'light' ? '#f4f4f5' : '#06060a';
+        if (tg.setHeaderColor) tg.setHeaderColor(bg);
+        if (tg.setBackgroundColor) tg.setBackgroundColor(bg);
+      } catch (e) {}
+    }
+  }
+
+  var theme = getTheme();
+  applyTheme(theme);
+  if (tg) {
+    try {
+      tg.ready();
+      tg.expand();
+    } catch (e) {}
+  }
+  if (!tg && window.matchMedia) window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', function(e){ applyTheme(e.matches ? 'light' : 'dark'); });
+
+  function $(s, r){ return (r || document).querySelector(s); }
+  function $$(s, r){ return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
+
+  var views = {
+    main: $('#view-main'),
+    now: $('#view-now'),
+    path: $('#view-path'),
+    item: $('#view-item'),
+    favs: $('#view-favs')
+  };
+
+  var navItems = $$('.nav-item');
+
+  var toastEl = $('#toast');
+  var toastTimer = null;
+  function toast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, 1600);
+  }
+
+  // =====================
+  // Profile placeholders
+  // =====================
+  var USER = {
+    name: 'Искандер Джин',
+    level: 7,
+    subtitle: 'Навигация по системе Психомагии',
+    avatarUrl: null
+  };
+
+  function applyUser(){
+    $('#userName').textContent = USER.name;
+    $('#userLevel').textContent = 'Уровень чувственных знаний: ' + USER.level;
+    $('#userSub').textContent = USER.subtitle;
+    var av = $('#avatar');
+    if (USER.avatarUrl) {
+      av.style.backgroundImage = 'url("' + USER.avatarUrl + '")';
+      av.style.backgroundSize = 'cover';
+      av.style.backgroundPosition = 'center';
+    }
+  }
+  applyUser();
+
+  // =====================
+  // Favorites
+  // =====================
+  var FAV_KEY = 'psychomagia_favs_v3';
+  function getFavs(){
+    try { return JSON.parse(localStorage.getItem(FAV_KEY) || '[]'); } catch(e){ return []; }
+  }
+  function setFavs(ids){ localStorage.setItem(FAV_KEY, JSON.stringify(ids)); }
+  function isFav(id){ return getFavs().indexOf(id) >= 0; }
+  function toggleFav(id){
+    var ids = getFavs();
+    var i = ids.indexOf(id);
+    if (i >= 0) {
+      ids.splice(i,1);
+      setFavs(ids);
+      toast('Убрано из Избранного');
+      return false;
+    }
+    ids.push(id);
+    setFavs(ids);
+    toast('Добавлено в Избранное');
+    return true;
+  }
+
+  // =====================
+  // Links (replace later)
+  // =====================
+  var LINKS = {
+    test_happiness: '#',
+    test_libido: '#',
+    test_crystal: '#',
+    test_personality: '#',
+    join_field: '#',
+    base: '#',
+    key_videos: '#',
+    program_formula: '#',
+    masters_map: '#',
+    shop: '#'
+  };
+
+  // =====================
+  // Data models
+  // =====================
+  var DIAGNOSTICS = [
+    { id:'diag_purpose', icon:'✦', title:'Предназначение и направленность', sub:'', tag:'диагностика', locked:true },
+    { id:'diag_wealth', icon:'◈', title:'Степень готовности к истинному богатству', sub:'', tag:'диагностика', locked:true },
+    { id:'diag_rel_now', icon:'❤', title:'Рекомендации в актуальной ситуации в отношениях', sub:'', tag:'диагностика', locked:true },
+    { id:'diag_psycho', icon:'⌁', title:'Рекомендации по психосоматическому здоровью', sub:'', tag:'диагностика', locked:true },
+    { id:'diag_hook', icon:'◎', title:'Ключевая зацепка, ухудшающая настроение', sub:'', tag:'диагностика', locked:true },
+    { id:'diag_power_place', icon:'⛰', title:'Рекомендации по месту силы', sub:'', tag:'диагностика', locked:true },
+    { id:'diag_energy_leisure', icon:'☾', title:'Как восполнить энергию: досуг', sub:'', tag:'диагностика', locked:true },
+    { id:'diag_content', icon:'✺', title:'Контент для духовных озарений', sub:'', tag:'диагностика', locked:true },
+    { id:'diag_sex_block', icon:'🜁', title:'Диагностика блока сексуальной энергии', sub:'', tag:'диагностика', locked:true },
+    { id:'diag_crystal_now', icon:'✧', title:'Текущий уровень кристальности', sub:'', tag:'диагностика', locked:true },
+    { id:'diag_archetype', icon:'🃏', title:'Ключевой архетип', sub:'', tag:'диагностика', locked:true },
+    { id:'diag_mana', icon:'⚡', title:'Текущий уровень энергии Маны', sub:'', tag:'диагностика', locked:true },
+    { id:'diag_assemblage', icon:'◐', title:'Текущий уровень точки сборки и цвет ауры', sub:'', tag:'диагностика', locked:true },
+    { id:'diag_goals', icon:'➤', title:'Цели для успеха в будущем', sub:'', tag:'диагностика', locked:true },
+    { id:'diag_karma', icon:'⟡', title:'Текущий уровень кармы', sub:'', tag:'диагностика', locked:true },
+    { id:'diag_intuition', icon:'🜂', title:'Интуитивные способности', sub:'', tag:'диагностика', locked:true },
+    { id:'diag_dominants', icon:'⎈', title:'Доминанты личности', sub:'', tag:'диагностика', locked:true },
+    { id:'diag_totem', icon:'🜃', title:'Тотемное животное', sub:'', tag:'диагностика', locked:true }
+  ];
+
+  // Важно: без template literals и без сырых переносов строк внутри кавычек.
+  // Это защищает от "document.write(...)"-обёрток, которые ломаются на неожиданных токенах.
+  var TESTIMONIALS = [
+    { name:'Екатерина Могилева', city:'Карелия', text:'Месяц в ЗК «Поле Психомагии». Замечаю за собой фундаментальные изменения в восприятии и состоянии. Это очень помогает не расшатываться от уроков балансировщиков, а собираться в целое, и расшифровывать из души. И самих провокаций стало гораздо меньше. Непривычно, как бы ждёшь, а их нет))\n\nГлубина в Психомагии бездонная, и по чувственным знаниям, и по энергиям. Предстоящая практика тому ещё одно доказательство. Несколько очень важных судьбоносных решений я в своей жизни приняла, доверившись интуиции, сама того не зная. Здорово, что можно обучиться этим управлять.\n\nБлагодарю Искандера, Психомагию, команду и Полевиков за то, что есть в моей жизни 🫂💖💫' },
+    { name:'Туйяра Аммосова', city:'Якутск', text:'Прошла 5 уроков Женской Кристаллизации, почувствовала себя женщиной, которая может получить много удовольствия от себя и в своей жизни. Стала нежнее и мягче, научилась принимать любые жизненные ситуации, стала чувственнее, стала лучше понимать людей, любить их, стала принимать и любить себя.\n\nБлагодарю Вселенную за то, что я встретилась с Психомагией, и, конечно, благодарю Искандера за чувственные знания, которые я получила за все курсы, которые я прошла, пропустила через себя и стала более счастливой и чувственной ♥️💎💎💎' },
+    { name:'Сажида Мукаилова', city:'Германия', text:'Хочу поделиться: уже больше года в Психомагии. Все курсы невероятно ценные, и я не жалею ни грамма, что обрела эти курсы. С тех пор моя жизнь полностью изменилась только в лучшую сторону. Я стала намного счастливее и иду дальше к своему счастью.\n\nВсе курсы стоили своих денег. Могу точно сказать: эту информацию и состояние, которое ты получаешь от курсов, просто не купить деньгами. Это невероятно ценно. Полученное состояние я беру с собой дальше после смерти — это инвестиция в моё будущее и благополучие будущего поколения.\n\nБлагодарю, Искандер ❤️' },
+    { name:'Ильхама Алиева', city:'Азербайджан', text:'Хочу поблагодарить Искандер Вас 🙏♥️ и всю Вашу сплочённую команду за то, что Вы есть. За то, что Вы делитесь Божественным потоком знаний 🙏 За то, что Вы с искрой в глазах, с огнём в сердце, с захватывающим дыханием и с не сходящей с лица улыбкой становитесь источником родниковой воды, к устьям которого прильнули столько жаждущих.\n\nПрошла не один Ваш курс, но именно «Сексомагия» стала той отправной точкой, когда всё начало двигаться — и в лучшую сторону. Я чувствую себя абсолютно новой, уверенной, наполненной, а главное, счастливой женщиной — сама по себе, сама для себя, сама ради себя!\n\nПоказатель — красивые букеты цветов, которыми засыпан весь мой дом ♥️💐 С любовью к Творцу и всем Вам ♥️💐' },
+    { name:'Фируза Кули Задэ', city:'Нью-Йорк', text:'На данном этапе я прошла «Сексомагию». До этого прошла больше десяти курсов Психомагии. Я точно знала, что у меня было 60% Ангелов и 40% Демонов. Но после курса я почувствовала в себе больше Демонов, чем Ангелов — фантазия зашкаливает. Я разблокировала чувства, которые долго прятала, и почувствовала мощь и силу.\n\nКурс подарил ощущение принятия своего уровня демонической энергии 😈 Это очень освобождающее чувство — «правильности» любого баланса ангельского и демонического.\n\nКто находится в Поле Психомагии и развивается, тот уже «избранный». Ключ — это мудрость, с которой открываешь дверь к изобилию и счастью. Искандер, вы настоящий Джин-волшебник. Благодарю за ваше великое дело — делать людей счастливыми 🙏' },
+    { name:'Аделя Арсаланова', city:'Сочи', text:'Хочу выразить благодарность Искандеру и Ольге за возможность, которая открывалась мне однажды. 🦁🙌 В нужный момент приходил звоночек от Психомагии и голос тотема Льва из Поля: «Заходи, тебя здесь ждут, всё получится».\n\nЯ осознаю, что некоторые вещи доходят очень поздно, но вся эта реальность виртуозно соединяет нас с нужными людьми для игры. Наши травмы могут мешать видеть ясно и чувствовать истину.\n\nБлагодарю за проявления и желаю процветания и раскрытия кодов ещё шире. Пусть изобилие множится. Шлю поток благодарности из Львиной части себя 🦁👑' },
+    { name:'Вера Левченко', city:'Орск', text:'Хочу оставить отзыв из Поля Психомагии. После практики я погрузилась в такой объём чувственных знаний, будто прошла новый уровень духовного мастерства. Будто прошёл год — а по времени прошёл час.\n\nОсознаю, как ценно, что создано такое Поле. Для меня это самый мой формат! Благодарю, Искандер, мощный Проводник ❤️ Столько расширяющего материала — космос!' },
+    { name:'Евгения Волошина', city:'Московская область', text:'Прошло 3 месяца моей работы над собой, и хочу поделиться ощущениями. Психомагия действительно работает 👍\n\nВижу внутренние и внешние изменения. Уровень счастья повысился, много инсайтов и расшифровок. Листая фото и видео за год, вижу колоссальную разницу. Кто сомневается — от души советую проходить курсы полностью ❤️💋\n\nСпасибо Искандеру и Ольге 🙏' },
+    { name:'Раиса Донская', city:'Мытищи, Московская область', text:'Искандер, от души благодарю за курс «Сексомагия». Мне всё понравилось! 🥰\n\nСамое важное открытие — гармония Света и Тьмы. Появилась целостность восприятия своих порывов и фантазий. Благодарю! ☺️' }
+  ];
+
+  var PATH = [
+    { id:'evolution', icon:'✦', title:'Карта уровней', sub:'Новичок → Посвящённая → Мастер → Кристалл → Маг.', tag:'рост', url:'#' },
+    { id:'sequence', icon:'◈', title:'Последовательность программ', sub:'Как идти по системе без хаоса.', tag:'маршрут', url:'#' },
+    { id:'masters_map', icon:'🗺', title:'Карта мастеров', sub:'Кто рядом, чем помогает, отзывы.', tag:'люди', url:LINKS.masters_map },
+    { id:'field', icon:'✺', title:'Поле Психомагии', sub:'Доступ, поддержка и глубина.', tag:'Поле', url:LINKS.join_field },
+    { id:'techniques', icon:'⟡', title:'Техники', sub:'Точные действия для изменений.', tag:'техники', url:'#' },
+    { id:'practices', icon:'◎', title:'Практики', sub:'Регулярная настройка состояния.', tag:'практики', url:'#' },
+    { id:'books', icon:'⌁', title:'Книги', sub:'Текстовые, аудио, физические.', tag:'книги', url:'#' },
+    { id:'marathons', icon:'⌁', title:'Марафоны', sub:'Циклы трансформации.', tag:'марафоны', url:'#' },
+    { id:'retreats', icon:'☾', title:'Онлайн-ретриты', sub:'Глубокие погружения дома.', tag:'ретриты', url:'#' },
+    { id:'meetups', icon:'❤', title:'Живые встречи', sub:'Практика вживую.', tag:'встречи', url:'#' },
+    { id:'messages', icon:'✺', title:'Послания', sub:'Короткие тексты ясности.', tag:'послания', url:'#' },
+    { id:'shop', icon:'⟡', title:'Магазин', sub:'Артефакты, книги, доступы.', tag:'магазин', url:LINKS.shop }
+  ];
+
+  // =====================
+  // Rendering helpers
+  // =====================
+  function escapeHTML(s){
+    return String(s)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;')
+      .replace(/'/g,'&#039;');
+  }
+
+  function tileHTML(item){
+    var on = item.id && isFav(item.id);
+    var lock = item.locked ? '🔒 ' : '';
+    return ''
+      + '<div class="tile" data-open="' + escapeHTML(item.id || '') + '" data-url="' + escapeHTML(item.url || '#') + '" data-title="' + escapeHTML(item.title || '') + '">'
+      +   '<div class="tile-icon"><span style="position:relative; font-size:16px;">' + escapeHTML(item.icon || '✦') + '</span></div>'
+      +   '<div class="tile-main">'
+      +     '<p class="tile-title">' + lock + escapeHTML(item.title || '') + '</p>'
+      +     (item.sub ? '<p class="tile-sub">' + escapeHTML(item.sub) + '</p>' : '')
+      +     '<div class="chip" style="margin-top:10px;">' + escapeHTML(item.tag || 'раздел') + '</div>'
+      +   '</div>'
+      +   '<div class="tile-actions">'
+      +     (item.id ? '<div class="fav ' + (on ? 'on' : '') + '" data-fav="' + escapeHTML(item.id) + '" title="Избранное">❤</div>' : '')
+      +   '</div>'
+      + '</div>';
+  }
+
+  function renderList(el, arr){
+    if (!el) return;
+    var html = '';
+    for (var i=0;i<arr.length;i++) html += tileHTML(arr[i]);
+    el.innerHTML = html;
+  }
+
+  renderList($('#diagList'), DIAGNOSTICS);
+  renderList($('#pathList'), PATH);
+
+  // Today in Field teaser
+  var TODAY_FIELD = [
+    { id:'tf1', icon:'✦', title:'Практика недели', sub:'Короткая настройка состояния и ясности.', tag:'Поле', url:LINKS.join_field },
+    { id:'tf2', icon:'◎', title:'Новая расшифровка', sub:'Пример глубинного вывода на реальной ситуации.', tag:'Поле', url:LINKS.join_field },
+    { id:'tf3', icon:'❤', title:'Живой разбор', sub:'Тёплая поддержка и верная траектория.', tag:'Поле', url:LINKS.join_field }
+  ];
+  renderList($('#todayField'), TODAY_FIELD);
+
+  // Render reviews
+  var reviewsEl = $('#reviewsList');
+  if (reviewsEl) {
+    var rhtml = '';
+    for (var r=0;r<TESTIMONIALS.length;r++){
+      var it = TESTIMONIALS[r];
+      var city = (it.city || '').trim();
+      var cityHTML = city ? '<p class="review-city">' + escapeHTML(city) + '</p>' : '<p class="review-city" style="opacity:.0;">&nbsp;</p>';
+      rhtml += ''
+        + '<div class="review">'
+        +   '<div class="review-mark">💬</div>'
+        +   '<div class="review-top">'
+        +     '<p class="review-name">' + escapeHTML(it.name) + '</p>'
+        +     cityHTML
+        +   '</div>'
+        +   '<p class="review-text">' + escapeHTML(it.text) + '</p>'
+        +   '<div class="chip" style="margin-top:10px;">отзыв</div>'
+        + '</div>';
+    }
+    reviewsEl.innerHTML = rhtml;
+  }
+
+  // =====================
+  // Routing
+  // =====================
+  var state = { route:'main', prev:'main' };
+
+  function setActiveView(route){
+    for (var k in views) { if (views[k]) views[k].classList.remove('active'); }
+    (views[route] || views.main).classList.add('active');
+
+    for (var i=0;i<navItems.length;i++) navItems[i].classList.remove('active');
+    for (var j=0;j<navItems.length;j++) {
+      if (navItems[j].dataset.route === route) { navItems[j].classList.add('active'); break; }
+    }
+
+    var sc = document.querySelector('.app');
+    if (sc) sc.scrollTo({ top:0, behavior:'smooth' });
+  }
+
+  function navigate(route){
+    state.prev = state.route;
+    state.route = route;
+    setActiveView(route);
+  }
+
+  // Bottom nav
+  for (var i=0;i<navItems.length;i++){
+    (function(n){
+      n.addEventListener('click', function(){ navigate(n.dataset.route); });
+    })(navItems[i]);
+  }
+
+  // Cards/tile open
+  document.addEventListener('click', function(e){
+    var t = e.target;
+
+    var favEl = t.closest ? t.closest('[data-fav]') : null;
+    if (favEl) {
+      var id = favEl.dataset.fav;
+      var on = toggleFav(id);
+      favEl.classList.toggle('on', on);
+      if (state.route === 'favs') renderFavs();
+      return;
+    }
+
+    var openCard = t.closest ? t.closest('[data-open]') : null;
+    if (openCard && openCard.dataset.open) {
+      openEntity(openCard.dataset.open);
+      return;
+    }
+
+    var routeEl = t.closest ? t.closest('[data-route]') : null;
+    if (routeEl && routeEl.dataset.route) {
+      navigate(routeEl.dataset.route);
+      return;
+    }
+  });
+
+  // Header buttons
+  $('#btnPreview').addEventListener('click', function(){ $('#modal').classList.add('show'); });
+  $('#btnClose').addEventListener('click', function(){ $('#modal').classList.remove('show'); });
+
+  $('#btnHow').addEventListener('click', function(){
+    var el = $('#howText');
+    el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
+  });
+
+  $('#btnCopy').addEventListener('click', function(){
+    var ok = false;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(document.documentElement.outerHTML);
+        ok = true;
+      }
+    } catch(e) {}
+    toast(ok ? 'HTML скопирован' : 'Не удалось скопировать');
+  });
+
+  $('#btnFavs').addEventListener('click', function(){
+    $('#modal').classList.remove('show');
+    renderFavs();
+    navigate('favs');
+  });
+
+  // Main hero buttons
+  $('#btnBase').addEventListener('click', function(){ openLink(LINKS.base, 'Подключим ссылку на «База Психомагии»'); });
+  $('#btnKeyVideos').addEventListener('click', function(){ openLink(LINKS.key_videos, 'Подключим ссылку на «Ключевые видео»'); });
+
+  // Diagnostics hero buttons
+  $('#btnJoinField').addEventListener('click', function(){ openLink(LINKS.join_field, 'Подключим ссылку на вход в Поле'); });
+
+  // Top Field CTA
+  $('#btnJoinFieldTop').addEventListener('click', function(){ openLink(LINKS.join_field, 'Подключим ссылку на вход в Поле'); });
+  $('#btnWhyFieldTop').addEventListener('click', function(){ toast('Поле даёт доступ к глубинным расшифровкам, поддержку и регулярную практику'); });
+  $('#btnWhyField').addEventListener('click', function(){ toast('Поле даёт доступ, поддержку и верную траекторию'); });
+
+  // Path hero buttons
+  $('#btnEvolution').addEventListener('click', function(){ openEntity('evolution'); });
+  $('#btnCourses').addEventListener('click', function(){ openEntity('sequence'); });
+
+  // Back from item
+  $('#btnBack').addEventListener('click', function(){
+    var back = (state.prev && state.prev !== 'item') ? state.prev : 'main';
+    navigate(back);
+  });
+
+  // Swipe between 3 tabs
+  var touchX = null;
+  document.addEventListener('touchstart', function(e){
+    if (!e.touches || !e.touches.length) return;
+    touchX = e.touches[0].clientX;
+  }, { passive:true });
+
+  document.addEventListener('touchend', function(e){
+    if (touchX === null) return;
+    var endX = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientX : null;
+    if (endX === null) { touchX = null; return; }
+    var dx = endX - touchX;
+    touchX = null;
+    if (Math.abs(dx) < 70) return;
+    if (['main','now','path'].indexOf(state.route) < 0) return;
+    var tabs = ['main','now','path'];
+    var idx = tabs.indexOf(state.route);
+    if (idx < 0) return;
+    if (dx < 0 && idx < tabs.length - 1) { navigate(tabs[idx+1]); toast('Перелистывание'); }
+    if (dx > 0 && idx > 0) { navigate(tabs[idx-1]); toast('Перелистывание'); }
+  }, { passive:true });
+
+  // =====================
+  // Entity open logic
+  // =====================
+  function openLink(url, fallbackMsg){
+    if (url && url !== '#') {
+      window.open(url, '_blank');
+    } else {
+      toast(fallbackMsg);
+    }
+  }
+
+  function openEntity(key){
+    var testMap = {
+      test_happiness: { title:'Тест счастья', text:'Откроется Telegram-бот и проведёт вас по тесту.', tag:'бот', url:LINKS.test_happiness },
+      test_libido: { title:'Тест либидо', text:'Определение уровня энергии и состояния.', tag:'бот', url:LINKS.test_libido },
+      test_crystal: { title:'Тест кристальности', text:'Уровень чистоты намерения и ясности.', tag:'бот', url:LINKS.test_crystal },
+      test_personality: { title:'Диагностика личности', text:'Психологический профиль и ключевые особенности.', tag:'бот', url:LINKS.test_personality }
+    };
+
+    var entity = testMap[key] || {
+      title: prettyTitle(key),
+      text: 'Плейсхолдер. Здесь будет содержимое, ссылки и материалы.',
+      tag: 'раздел',
+      url: '#'
+    };
+
+    if (key === 'program_formula') {
+      entity.title = 'Формула счастья';
+      entity.text = 'Базовая программа, которая раскрывает ядро философии Психомагии и собирает картину целиком.';
+      entity.tag = 'программа';
+      entity.url = LINKS.program_formula;
+    }
+    if (key === 'masters_map') {
+      entity.title = 'Карта мастеров Психомагии';
+      entity.text = 'Интерактивная карта: имя, город, деятельность, уровень чувственных знаний и отзывы о мастере.';
+      entity.tag = 'карта';
+      entity.url = LINKS.masters_map;
+    }
+    if (key === 'shop') {
+      entity.title = 'Магазин Психомагии';
+      entity.text = 'Артефакты, книги, доступы и редкие материалы.';
+      entity.tag = 'магазин';
+      entity.url = LINKS.shop;
+    }
+    if (key === 'field') {
+      entity.title = 'Поле Психомагии';
+      entity.text = 'Подписка, преимущества, формат и вход. Через Поле раскрывается доступ к диагностике.';
+      entity.tag = 'Поле';
+      entity.url = LINKS.join_field;
+    }
+    if (key === 'evolution') {
+      entity.title = 'Путь духовного роста Психомагии';
+      entity.text = 'Ступени роста чувственных знаний. Привязка: 3000 единиц = 9 000 000 ₽ (30 курсов × 300 000 ₽ минимум). Значит 1 единица ≈ 3 000 ₽.';
+      entity.tag = 'карта';
+      entity.url = '#';
+    }
+    if (key === 'sequence') {
+      entity.title = 'Последовательность прохождения курсов';
+      entity.text = 'Здесь будет схема: какие программы на каком уровне и в каком порядке проходить — дополним вашей диктовкой.';
+      entity.tag = 'путь';
+      entity.url = '#';
+    }
+
+    state.prev = state.route;
+    $('#itemTitle').textContent = entity.title;
+    $('#itemHeadline').textContent = entity.title;
+    $('#itemText').textContent = entity.text;
+    $('#itemTag').textContent = entity.tag;
+    $('#itemBadge').innerHTML = '<span class="glow-dot"></span> Психомагия';
+
+    $('#itemOpen').onclick = function(){ openLink(entity.url, 'Подключим ссылку'); };
+
+    var favId = key;
+    var favBtn = $('#itemFav');
+    var on = isFav(favId);
+    favBtn.querySelector('span:last-child').textContent = on ? 'В Избранном' : 'В Избранное';
+    favBtn.onclick = function(){
+      var now = toggleFav(favId);
+      favBtn.querySelector('span:last-child').textContent = now ? 'В Избранном' : 'В Избранное';
+    };
+
+    var content = [];
+    if (key === 'masters_map') {
+      content.push({ id:'m1', icon:'◎', title:'Наталья Вен — Москва', sub:'Практик. Работа с отношениями. Уровень: 5.', tag:'мастер' });
+      content.push({ id:'m2', icon:'◎', title:'Фируза — Алматы', sub:'Практик. Энергия и женская сила. Уровень: 4.', tag:'мастер' });
+      content.push({ id:'m3', icon:'◎', title:'Элина — Санкт-Петербург', sub:'Практик. Самоценность и опора. Уровень: 4.', tag:'мастер' });
+      content.push({ id:'m4', icon:'◎', title:'Рафаэль — Дубай', sub:'Практик. Сценарии судьбы. Уровень: 6.', tag:'мастер' });
+      content.push({ id:'m5', icon:'◎', title:'Живилея — Вильнюс', sub:'Практик. Интуитивные способности. Уровень: 5.', tag:'мастер' });
+      content.push({ id:'mr', icon:'❤', title:'Отзывы о мастерах', sub:'Открыть отзывы и результаты клиентов.', tag:'отзывы' });
+    } else if (key === 'books') {
+      content.push({ id:'b1', icon:'⌁', title:'Текстовые книги', sub:'Читать внутри Telegram или на сайте.', tag:'текст' });
+      content.push({ id:'b2', icon:'▶', title:'Аудиокниги', sub:'Слушать в дороге и в паузах.', tag:'аудио' });
+      content.push({ id:'b3', icon:'◈', title:'Физические книги', sub:'Заказать доставку.', tag:'физические' });
+    } else if (key === 'techniques' || key === 'practices') {
+      content.push({ id:'p1', icon:'✦', title:'Практика 1', sub:'Плейсхолдер: вы добавите названия.', tag:'практика' });
+      content.push({ id:'p2', icon:'✦', title:'Практика 2', sub:'Плейсхолдер: вы добавите названия.', tag:'практика' });
+      content.push({ id:'p3', icon:'✦', title:'Практика 3', sub:'Плейсхолдер: вы добавите названия.', tag:'практика' });
+    } else {
+      content.push({ id:'x1', icon:'✦', title:'Материалы', sub:'Здесь будет список видео/статей/практик.', tag:'содержимое' });
+    }
+
+    renderList($('#itemContent'), content);
+    navigate('item');
+  }
+
+  function prettyTitle(key){
+    var map = {
+      my_archetype:'Мой архетип',
+      my_totem:'Моё тотемное животное',
+      my_power_place:'Моё место силы',
+      my_destiny_partner:'Мой партнёр по судьбе',
+      my_crystallinity_level:'Мой уровень кристальности',
+      my_purpose:'Моё предназначение',
+      my_superpowers:'Мои сверхспособности',
+      marathons:'Марафоны',
+      retreats:'Онлайн-ретриты',
+      meetups:'Живые встречи',
+      messages:'Послания человечеству',
+      techniques:'Техники Психомагии',
+      practices:'Практики Психомагии',
+      books:'Книги Психомагии',
+      evolution:'Карта уровней',
+      sequence:'Последовательность программ',
+      field:'Поле Психомагии',
+      shop:'Магазин Психомагии',
+      masters_map:'Карта мастеров Психомагии',
+      program_formula:'Формула счастья',
+      test_happiness:'Тест счастья',
+      test_libido:'Тест либидо',
+      test_crystal:'Тест кристальности',
+      test_personality:'Диагностика личности'
+    };
+    return map[key] || 'Раздел';
+  }
+
+  // Favs view
+  function renderFavs(){
+    var ids = getFavs();
+    var items = [];
+    for (var i=0;i<ids.length;i++){
+      items.push({ id: ids[i], icon:'❤', title: prettyTitle(ids[i]) || ids[i], sub:'Сохранённый раздел/тест/страница.', tag:'избранное', url:'#' });
+    }
+    var listEl = $('#favList');
+    var emptyEl = $('#favEmpty');
+    renderList(listEl, items);
+    emptyEl.style.display = items.length ? 'none' : 'block';
+  }
+
+  // Clicking outside modal closes it
+  $('#modal').addEventListener('click', function(e){
+    if (e.target && e.target.id === 'modal') $('#modal').classList.remove('show');
+  });
+
+  // =====================
+  // Self-tests (dev only)
+  // =====================
+  function assert(cond, msg){ if (!cond) throw new Error('TEST FAIL: ' + msg); }
+
+  function scanForBadChars(str){
+    // U+2028 / U+2029 иногда ломают eval/document.write-обёртки
+    return /\u2028|\u2029|[\u2028\u2029]/.test(str);
+  }
+
+  function runSelfTests(){
+    assert(views.main && views.now && views.path && views.item, 'views exist');
+    assert(navItems.length === 3, 'bottom nav has 3 items');
+    assert(Array.isArray(TESTIMONIALS) && TESTIMONIALS.length >= 5, 'testimonials exist');
+    assert($('#reviewsList') != null, '#reviewsList exists');
+    var anyReview = document.querySelector('.review');
+    assert(!!anyReview, 'at least one .review rendered');
+
+    for (var i=0;i<TESTIMONIALS.length;i++){
+      assert(!scanForBadChars(TESTIMONIALS[i].text), 'no U+2028/U+2029 in testimonials');
+    }
+
+    openEntity('field');
+    navigate('main');
+    return true;
+  }
+
+  try {
+    runSelfTests();
+  } catch(err) {
+    console.error(err);
+    toast('Ошибка: ' + (err && err.message ? err.message : 'unknown'));
+  }
+
+  toast('Готово: структура по вашей надиктовке');
+</script>
+</body>
+</html>
