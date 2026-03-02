@@ -1402,15 +1402,25 @@
     navigate(back);
   });
 
-  // Swipe between 3 tabs
+  // Swipe between tabs — только когда палец НЕ в зоне горизонтального скролла (карточки, отзывы, списки)
   var touchX = null;
+  var touchStartedInHScroll = false;
+  function isInsideHorizontalScroll(el){
+    while (el && el !== document.body) {
+      if (el.classList && (el.classList.contains('cards-hscroll') || el.classList.contains('list-hscroll') || el.classList.contains('hscroll'))) return true;
+      el = el.parentElement;
+    }
+    return false;
+  }
   document.addEventListener('touchstart', function(e){
     if (!e.touches || !e.touches.length) return;
     touchX = e.touches[0].clientX;
+    touchStartedInHScroll = isInsideHorizontalScroll(e.target);
   }, { passive:true });
 
   document.addEventListener('touchend', function(e){
     if (touchX === null) return;
+    if (touchStartedInHScroll) { touchX = null; touchStartedInHScroll = false; return; }
     var endX = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientX : null;
     if (endX === null) { touchX = null; return; }
     var dx = endX - touchX;
