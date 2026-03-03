@@ -106,26 +106,44 @@
     .topbar-row{ display:flex; align-items:center; justify-content:center; padding:4px 0; min-height:40px; gap:10px; }
     .topbar-logo{ width:28px; height:28px; object-fit:contain; flex-shrink:0; }
     .topbar-title{ font-size:15px; font-weight:900; letter-spacing:.2px; color:var(--text); }
-    /* При скролле показываем только иконку + «Психомагия», карточку профиля скрываем */
-    body[data-topbar-scrolled="true"] .profile-card{ opacity:0; pointer-events:none; max-height:0; margin:0; padding:0; overflow:hidden; border:none; transition:opacity .25s var(--ease), max-height .3s var(--ease), margin .25s var(--ease), padding .25s var(--ease); }
+    /* При скролле показываем только иконку + «Психомагия», карточка профиля плавно уезжает и исчезает */
+    body[data-topbar-scrolled="true"] .profile-card{
+      opacity:0;
+      pointer-events:none;
+      max-height:0;
+      margin-top:0;
+      padding-top:0;
+      padding-bottom:0;
+      transform:translateY(-8px);
+      border-color:transparent;
+    }
     body[data-topbar-scrolled="true"] .topbar-inner{ padding-bottom:10px; }
     /* На разделах (не главная) скрываем заголовок и блок профиля, уменьшаем отступы */
     body:not([data-route="main"]) .topbar-row--main,
     body:not([data-route="main"]) .profile-card{ display:none !important; }
     body:not([data-route="main"]) .topbar-inner{ padding-top:6px; padding-bottom:6px; min-height:0; }
     .profile-card{
-      display:flex; align-items:center; gap:12px;
-      padding:12px 14px; margin-top:6px;
-      border-radius:var(--radius);
+      display:flex; align-items:center; gap:10px;
+      padding:8px 12px; margin-top:4px;
+      border-radius:16px;
       background:var(--panel);
       border:1px solid var(--stroke);
       box-shadow:0 8px 20px rgba(0,0,0,.15);
       cursor:pointer;
-      transition:transform .2s var(--ease), background .2s var(--ease);
+      max-height:80px;
+      overflow:hidden;
+      transition:
+        opacity .32s var(--ease),
+        max-height .36s var(--ease),
+        margin .28s var(--ease),
+        padding .28s var(--ease),
+        transform .28s var(--ease),
+        background .2s var(--ease),
+        border-color .28s var(--ease);
     }
     .profile-card:hover{ transform:translateY(-1px); background:var(--panel2); }
     .profile-card .profile{ flex:1; min-width:0; }
-    .profile-card .avatar{ width:48px; height:48px; border-radius:50%; flex-shrink:0; }
+    .profile-card .avatar{ width:36px; height:36px; border-radius:50%; flex-shrink:0; }
     .profile-arrow{
       width:24px; height:24px; flex-shrink:0;
       display:flex; align-items:center; justify-content:center;
@@ -134,8 +152,8 @@
     .profile-arrow svg{ width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:2.5; }
 
     .avatar{
-      width:44px;height:44px;
-      border-radius:16px;
+      width:36px;height:36px;
+      border-radius:14px;
       background:linear-gradient(135deg, rgba(143,67,198,.08), rgba(104,164,206,.04));
       border:1px solid rgba(143,67,198,.18);
       box-shadow:var(--shadow2);
@@ -155,7 +173,7 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      font-size:16px;
+      font-size:13px;
       font-weight:800;
       letter-spacing:.5px;
       color:rgba(255,255,255,.95);
@@ -174,9 +192,9 @@
     }
     .name{
       margin:0;
-      font-size:16px;
+      font-size:14px;
       font-weight:900;
-      letter-spacing:.2px;
+      letter-spacing:.15px;
       white-space:normal;
       overflow:visible;
       text-overflow:clip;
@@ -184,16 +202,16 @@
     }
     .level{
       margin:0;
-      font-size:12px;
+      font-size:11px;
       color:rgba(255,255,255,.82);
-      padding:7px 10px;
+      padding:5px 9px;
       border-radius:999px;
       background:rgba(104,164,206,.1);
       border:1px solid rgba(143,67,198,.18);
       white-space:nowrap;
       flex:0 0 auto;
     }
-    .sub{ margin:3px 0 0; font-size:12px; color:var(--muted2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .sub{ margin:2px 0 0; font-size:11px; color:var(--muted2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
     .pill{
       display:inline-flex; align-items:center; gap:8px;
