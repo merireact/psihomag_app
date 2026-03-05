@@ -228,6 +228,36 @@
     }
     .hero-inner{ position: relative; padding: 16px 16px 14px; }
 
+    /* Главный блок "Вы не случайно здесь" с фоновым изображением */
+    .hero--main{
+      background: url("https://i.postimg.cc/9fL5VzQd/IMAGE-2026-03-05-16-02-29.jpg") 30% center / cover no-repeat;
+      border: 1px solid rgba(0,0,0,.4);
+      box-shadow: 0 22px 60px rgba(0,0,0,.55);
+    }
+    .hero--main:before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: rgba(0,0,0,.45);
+      opacity:1;
+      pointer-events:none;
+    }
+    .hero--main .hero-title,
+    .hero--main .hero-text{
+      color:#ffffff;
+    }
+
+    .hero--main .btn-ghost{
+      color:#ffffff;
+      background: rgba(255,255,255,.16);
+      border: 1px solid rgba(255,255,255,.75);
+      box-shadow: 0 14px 40px rgba(0,0,0,.6);
+    }
+    .hero--main .btn-ghost:hover{
+      background: rgba(255,255,255,.22);
+      border-color: rgba(255,255,255,.9);
+    }
+
     .badge{
       display: inline-flex;
       align-items: center;
@@ -676,7 +706,7 @@
 
     <!-- VIEW: Сейчас -->
     <section class="view active" id="view-now">
-      <div class="hero">
+      <div class="hero hero--main">
         <div class="hero-inner">
           <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
             <span class="badge"><span class="dot"></span> Сейчас</span>
@@ -691,7 +721,7 @@
         </div>
       </div>
 
-      <div class="st"><span>Пробные материалы</span><small>без оплаты</small></div>
+      <div class="st" id="freeMaterials"><span>Пробные материалы</span><small>без оплаты</small></div>
       <div class="grid">
         <div class="card" data-tone="cyan" data-open="free_video_1">
           <div class="c-ico" aria-hidden="true">▶</div>
@@ -866,10 +896,9 @@
       <div class="nav-item active" data-route="now">
         <span class="nav-ico">
           <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <!-- Осознанность / момент: концентрические круги и точка -->
-            <circle cx="12" cy="12" r="7" />
-            <circle cx="12" cy="12" r="3.5" />
-            <circle cx="12" cy="12" r="1.2" />
+            <!-- Сейчас: минималистичный «момент» — контур и стрелка-вектор времени -->
+            <circle cx="12" cy="12" r="6.5" />
+            <path d="M12 12V8.5" />
           </svg>
         </span>
         <span class="nav-label">Сейчас</span>
@@ -882,12 +911,10 @@
       <div class="nav-item" data-route="deeper">
         <span class="nav-ico">
           <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <!-- Глубина: слои и стрелка вниз внутрь -->
-            <path d="M5 7h14" />
-            <path d="M7 11h10" />
-            <path d="M9 15h6" />
-            <path d="M12 9v8" />
-            <path d="M9.5 15.5L12 18l2.5-2.5" />
+            <!-- Глубже: простой вектор «вглубь» — линия-уровень и стрелка вниз -->
+            <path d="M7 9h10" />
+            <path d="M12 9v6" />
+            <path d="M9.5 13.5L12 16l2.5-2.5" />
           </svg>
         </span>
         <span class="nav-label">Глубже</span>
@@ -900,10 +927,9 @@
       <div class="nav-item" data-route="space">
         <span class="nav-ico">
           <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <!-- Поле / пространство: орбита и звезда -->
-            <ellipse cx="12" cy="13" rx="7.5" ry="4.2" />
-            <circle cx="8.5" cy="12" r="0.9" />
-            <path d="M16 5.5L16.7 7.3L18.5 8L16.7 8.7L16 10.5L15.3 8.7L13.5 8L15.3 7.3Z" />
+            <!-- Пространство: орбита и одна точка — минималистичное поле -->
+            <ellipse cx="12" cy="13" rx="7" ry="3.8" />
+            <circle cx="8.2" cy="12.2" r="1" />
           </svg>
         </span>
         <span class="nav-label">Пространство</span>
@@ -1248,7 +1274,14 @@
 
   // Top CTAs
   $('#btnGoDeeper').addEventListener('click', () => go('deeper'));
-  $('#btnTryFree').addEventListener('click', () => toast('Пробные материалы уже ниже на экране'));
+  const freeMaterialsEl = document.getElementById('freeMaterials');
+  $('#btnTryFree').addEventListener('click', () => {
+    if (freeMaterialsEl) {
+      freeMaterialsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      toast('Пробные материалы уже ниже на экране');
+    }
+  });
 
   function fieldCTA(){ openLink(LINKS.join_field, 'Подключим ссылку на вход в Поле'); }
   $('#btnJoinField').addEventListener('click', fieldCTA);
