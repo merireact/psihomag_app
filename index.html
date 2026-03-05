@@ -2,965 +2,592 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="dark light" />
-  <title>Психомагия — Telegram Mini App (прототип)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light" />
+  <title>Психомагия — Mini App</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    /* Тема по умолчанию: тёмная. Светлая задаётся [data-theme="light"] на <html> из Telegram или системы. */
     :root{
-      --bg:#080612;
-      --panel: rgba(28,22,42,.75);
-      --panel2: rgba(36,28,52,.82);
-      --stroke: rgba(143,67,198,.12);
-      --stroke2: rgba(104,164,206,.14);
-      --text:#ffffff;
-      --muted: rgba(255,255,255,.70);
-      --muted2: rgba(255,255,255,.52);
-      /* Основная палитра: бирюзовый → голубой → фиолетовый #8f43c6 */
-      --accent1: #53DBC6;
-      --accent2: #68A4CE;
-      --accent3: #9878DB;
-      --accent4: #8f43c6;
-      --accent4-dark: #6b2d95;
-      --gradient-purple: linear-gradient(135deg, #8f43c6 0%, #6b2d95 50%, #5a2380 100%);
-      --accent1-light: #7ae5d8;
-      --shadow: 0 20px 60px rgba(0,0,0,.55);
-      --shadow2: 0 12px 30px rgba(0,0,0,.45);
-      --radius: 18px;
-      --radius2: 22px;
+      /* Базовые акценты */
+      --accent-blue: #46cdca;
+      --accent-purple: #7569b4;
+
+      /* Нейтральная база */
+      --bg:#ffffff;
+      --panel: rgba(255,255,255,.96);
+      --panel2: rgba(255,255,255,.98);
+      --text: #15151a;
+      --muted: rgba(21,21,26,.72);
+      --muted2: rgba(21,21,26,.56);
+
+      /* Производные от акцентов */
+      --stroke: rgba(70,205,202,.18);
+      --stroke-strong: rgba(70,205,202,.26);
+      --accent: var(--accent-purple);
+      --accent-soft-blue: rgba(70,205,202,.12);
+      --accent-soft-blue2: rgba(70,205,202,.18);
+      --accent-soft-purple: rgba(117,105,180,.14);
+      --accent-soft-mixed: linear-gradient(135deg, rgba(70,205,202,.18), rgba(117,105,180,.2));
+
+      --shadow: 0 22px 60px rgba(117,105,180,.28);
+      --shadow-soft: 0 14px 40px rgba(70,205,202,.22);
+      --shadow2: 0 10px 26px rgba(70,205,202,.18);
+
+      --r: 20px;
       --ease: cubic-bezier(.2,.9,.2,1);
     }
+
     *{ box-sizing:border-box; }
     html, body{ height:100%; background:var(--bg); background-color:var(--bg); }
-    html{ background:var(--bg); background-color:var(--bg); overscroll-behavior:none; }
-    /* Fix white overscroll / rubber band (особенно в WebView) */
-    body{ background-color:var(--bg); overscroll-behavior:none; overflow:hidden; }
-    @supports (-webkit-touch-callout: none){ body{ background-attachment: fixed; } }
+    html{ overscroll-behavior:none; }
     body{
       margin:0;
-      -webkit-font-smoothing:antialiased;
-      text-rendering:optimizeLegibility;
       font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Segoe UI",Roboto,sans-serif;
       color:var(--text);
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
       background:
-        radial-gradient(1200px 900px at 30% -10%, rgba(83,219,198,.28), transparent 55%),
-        radial-gradient(1100px 900px at 110% 10%, rgba(143,67,198,.28), transparent 55%),
-        radial-gradient(1000px 800px at 60% 120%, rgba(104,164,206,.24), transparent 60%),
-        radial-gradient(900px 700px at 80% 20%, rgba(152,120,219,.2), transparent 50%),
-        linear-gradient(180deg, #0c0816 0%, #0e0a1c 35%, #080612 65%, #06060a 100%);
-      overflow-x:hidden;
+        radial-gradient(1200px 900px at 20% -10%, rgba(70,205,202,.20), transparent 55%),
+        radial-gradient(1100px 900px at 90% 20%, rgba(117,105,180,.18), transparent 55%),
+        radial-gradient(1000px 800px at 70% 100%, rgba(70,205,202,.16), transparent 60%),
+        linear-gradient(180deg, rgba(70,205,202,.06) 0%, rgba(117,105,180,.10) 100%);
+      overflow:hidden;
     }
+
     body:before{
       content:"";
       position:fixed;
       inset:0;
-      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E");
-      opacity:.08;
       pointer-events:none;
+      opacity:.05;
       mix-blend-mode:overlay;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E");
     }
-    .aurora{
-      position:fixed;
-      inset:-20vh -20vw;
-      pointer-events:none;
-      filter:blur(42px);
-      opacity:.8;
-      transform:translateZ(0);
-      z-index:0;
-    }
-    .aurora:before,.aurora:after{
-      content:"";
-      position:absolute;
-      width:60vw;height:60vw;
-      border-radius:999px;
-      background:
-        radial-gradient(circle at 30% 30%, rgba(83,219,198,.32), transparent 58%),
-        radial-gradient(circle at 70% 60%, rgba(143,67,198,.3), transparent 58%),
-        radial-gradient(circle at 55% 80%, rgba(104,164,206,.28), transparent 62%),
-        radial-gradient(circle at 15% 70%, rgba(152,120,219,.22), transparent 55%);
-      animation:floaty 12s var(--ease) infinite;
-    }
-    .aurora:after{ left:35vw; top:10vh; opacity:.75; animation-duration:15s; animation-direction:reverse; }
-    @keyframes floaty{ 0%{transform:translate(0,0) scale(1)} 50%{transform:translate(6vw,3vh) scale(1.05)} 100%{transform:translate(0,0) scale(1)} }
 
     .app{
-      position:relative; z-index:1;
       height:100vh;
       overflow-y:auto;
       -webkit-overflow-scrolling:touch;
-      overscroll-behavior: none;
-      background:transparent;
-      padding-bottom: calc(88px + env(safe-area-inset-bottom));
+      overscroll-behavior:none;
+      padding-bottom: calc(96px + env(safe-area-inset-bottom));
     }
 
     .topbar{
-      position:sticky; top:0; z-index:6;
+      position:sticky;
+      top:0;
+      z-index:10;
       padding-top: env(safe-area-inset-top);
-      backdrop-filter:blur(16px);
-      -webkit-backdrop-filter:blur(16px);
-      background:linear-gradient(180deg, rgba(12,8,24,.88) 0%, rgba(18,12,32,.72) 60%, rgba(8,6,18,0) 100%);
-      border-bottom:1px solid rgba(143,67,198,.1);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.96) 0%, rgba(255,255,255,.94) 40%, rgba(255,255,255,0) 100%);
+      border-bottom: 1px solid rgba(70,205,202,.18);
     }
-    .topbar-inner{ max-width:560px; margin:0 auto; padding:10px 16px 12px; display:flex; flex-direction:column; gap:0; }
-    .topbar-row{ display:flex; align-items:center; justify-content:center; padding:4px 0; min-height:40px; gap:10px; }
-    .topbar-logo{ width:28px; height:28px; object-fit:contain; flex-shrink:0; }
-    .topbar-title{ font-size:15px; font-weight:900; letter-spacing:.2px; color:var(--text); }
-    /* При скролле показываем только иконку + «Психомагия», карточка профиля плавно уезжает и исчезает */
-    body[data-topbar-scrolled="true"] .profile-card{
-      opacity:0;
-      pointer-events:none;
-      max-height:0;
-      margin-top:0;
-      padding-top:0;
-      padding-bottom:0;
-      transform:translateY(-8px);
-      border-color:transparent;
+    .topbar-inner{
+      max-width: 560px;
+      margin:0 auto;
+      padding: 10px 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
     }
-    body[data-topbar-scrolled="true"] .topbar-inner{ padding-bottom:10px; }
-    /* На разделах (не главная) скрываем заголовок и блок профиля, уменьшаем отступы */
-    body:not([data-route="main"]) .topbar-row--main,
-    body:not([data-route="main"]) .profile-card{ display:none !important; }
-    body:not([data-route="main"]) .topbar-inner{ padding-top:6px; padding-bottom:6px; min-height:0; }
+    .topbar-row{
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 0;
+      min-height: 40px;
+      gap: 10px;
+    }
+    .topbar-logo{ width: 28px; height: 28px; object-fit: contain; flex-shrink: 0; }
+    .topbar-title{ font-size: 15px; font-weight: 900; letter-spacing: .2px; color: var(--text); }
+
     .profile-card{
-      display:flex; align-items:center; gap:10px;
-      padding:8px 12px; margin-top:4px;
-      border-radius:16px;
-      background:var(--panel);
-      border:1px solid var(--stroke);
-      box-shadow:0 8px 20px rgba(0,0,0,.15);
-      cursor:pointer;
-      max-height:80px;
-      overflow:hidden;
-      transition:
-        opacity .32s var(--ease),
-        max-height .36s var(--ease),
-        margin .28s var(--ease),
-        padding .28s var(--ease),
-        transform .28s var(--ease),
-        background .2s var(--ease),
-        border-color .28s var(--ease);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      margin-top: 4px;
+      border-radius: 16px;
+      background: var(--panel);
+      border: 1px solid var(--stroke);
+      box-shadow: 0 10px 26px rgba(117,105,180,.18);
+      cursor: pointer;
+      max-height: 80px;
+      overflow: hidden;
+      transition: background .2s var(--ease), border-color .2s var(--ease), transform .2s var(--ease);
     }
-    .profile-card:hover{ transform:translateY(-1px); background:var(--panel2); }
-    .profile-card .profile{ flex:1; min-width:0; }
-    .profile-card .avatar{ width:36px; height:36px; border-radius:50%; flex-shrink:0; }
+    .profile-card:hover{
+      transform: translateY(-1px);
+      background: var(--panel2);
+      box-shadow: var(--shadow-soft);
+    }
+    .profile-card .profile{ flex: 1; min-width: 0; }
     .profile-arrow{
-      width:24px; height:24px; flex-shrink:0;
-      display:flex; align-items:center; justify-content:center;
-      color:var(--muted2);
+      width: 24px; height: 24px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--accent);
     }
-    .profile-arrow svg{ width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:2.5; }
+    .profile-arrow svg{ width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.5; }
 
     .avatar{
-      width:36px;height:36px;
-      border-radius:14px;
-      background:linear-gradient(135deg, rgba(143,67,198,.08), rgba(104,164,206,.04));
-      border:1px solid rgba(143,67,198,.18);
-      box-shadow:var(--shadow2);
-      position:relative; overflow:hidden;
-      flex:0 0 auto;
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(70,205,202,.22), rgba(117,105,180,.30));
+      border: 1px solid rgba(70,205,202,.35);
+      box-shadow: 0 10px 26px rgba(117,105,180,.35);
+      position: relative;
+      overflow: hidden;
+      flex: 0 0 auto;
+    }
+    .avatar.initials{
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: .5px;
+      color: var(--accent);
+      text-transform: uppercase;
     }
     .avatar:before{
       content:"";
-      position:absolute; inset:-20px;
+      position: absolute;
+      inset: -20px;
       background:
-        radial-gradient(circle at 35% 25%, rgba(83,219,198,.35), transparent 55%),
-        radial-gradient(circle at 70% 65%, rgba(143,67,198,.28), transparent 58%),
-        radial-gradient(circle at 50% 50%, rgba(104,164,206,.2), transparent 62%);
-      animation:sheen 7s var(--ease) infinite;
+        radial-gradient(circle at 35% 25%, rgba(70,205,202,.40), transparent 55%),
+        radial-gradient(circle at 70% 65%, rgba(117,105,180,.36), transparent 58%);
+      opacity: .6;
+      pointer-events: none;
     }
-    .avatar.initials{
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:13px;
-      font-weight:800;
-      letter-spacing:.5px;
-      color:rgba(255,255,255,.95);
-      text-transform:uppercase;
-    }
-    .avatar.initials:before{ opacity:.6; }
-    @keyframes sheen{ 0%{transform:translate(0,0)} 50%{transform:translate(10px,-8px)} 100%{transform:translate(0,0)} }
 
-    .profile{ flex:1; min-width:0; }
-    .name-row{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-    .name{
-      margin:0;
-      font-size:14px;
-      font-weight:900;
-      letter-spacing:.15px;
-      white-space:normal;
-      overflow:visible;
-      text-overflow:clip;
-      word-break:break-word;
-    }
+    .profile{ flex: 1; min-width: 0; }
+    .name-row{ display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .name{ margin: 0; font-size: 14px; font-weight: 900; letter-spacing: .15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
     .level{
-      margin:0;
-      font-size:11px;
-      color:rgba(255,255,255,.82);
-      padding:5px 9px;
-      border-radius:999px;
-      background:rgba(104,164,206,.1);
-      border:1px solid rgba(143,67,198,.18);
-      white-space:nowrap;
-      flex:0 0 auto;
+      margin: 0;
+      font-size: 11px;
+      color: var(--accent);
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(70,205,202,.14), rgba(117,105,180,.18));
+      border: 1px solid rgba(70,205,202,.24);
+      white-space: nowrap;
+      flex: 0 0 auto;
     }
-    .sub{ margin:2px 0 0; font-size:11px; color:var(--muted2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .sub{ margin: 2px 0 0; font-size: 11px; color: var(--muted2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     .pill{
-      display:inline-flex; align-items:center; gap:8px;
-      padding:10px 12px;
-      min-height:44px;
-      border-radius:14px;
-      background:rgba(143,67,198,.08);
-      border:1px solid rgba(143,67,198,.16);
-      color:rgba(255,255,255,.92);
-      font-size:12px;
-      cursor:pointer; user-select:none;
-      transition:transform .2s var(--ease), background .2s var(--ease);
-      flex:0 0 auto;
-    }
-    .pill:hover{ transform:translateY(-1px); background:rgba(143,67,198,.12); }
-
-    .container{ max-width:560px; margin:0 auto; padding:16px; }
-
-    .section-title{
-      margin: 18px 2px 10px;
-      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: radial-gradient(circle at 0 0, rgba(70,205,202,.20), rgba(117,105,180,.08));
+      border: 1px solid rgba(70,205,202,.24);
+      color: var(--text);
+      font-size: 12px;
       font-weight: 900;
-      letter-spacing:.35px;
-      color: rgba(255,255,255,.92);
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      letter-spacing: .1px;
+      cursor: pointer;
+      user-select: none;
+      transition: transform .18s var(--ease), background .18s var(--ease);
+      flex: 0 0 auto;
     }
-    .st-left{ display:flex; align-items:center; gap:10px; }
-    .st-ico{
-      width:28px; height:28px;
-      border-radius:12px;
-      display:inline-flex; align-items:center; justify-content:center;
-      background:rgba(143,67,198,.18);
-      border:1px solid rgba(143,67,198,.22);
-      box-shadow:0 12px 22px rgba(0,0,0,.18);
-      position:relative; overflow:hidden;
-      flex:0 0 auto;
-    }
-    .st-ico:before{
-      content:"";
-      position:absolute; inset:-22px;
-      background:
-        radial-gradient(circle at 30% 30%, rgba(83,219,198,.25), transparent 60%),
-        radial-gradient(circle at 70% 70%, rgba(104,164,206,.2), transparent 62%),
-        radial-gradient(circle at 50% 50%, rgba(143,67,198,.18), transparent 58%);
-      opacity:.85;
-    }
-    .st-ico > span{ position:relative; font-size:14px; opacity:.95; }
-    .st-note{ color:rgba(255,255,255,.55); font-weight:900; font-size:12px; }
-
-    .grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    /* Горизонтальный скролл блоков карточек — меньше шума, компактнее */
-    .cards-hscroll{
-      display:flex;
-      gap:12px;
-      overflow-x:auto;
-      padding:2px 0 6px;
-      margin:0;
-      padding-left:20px;
-      padding-right:18px;
-      scroll-snap-type:x proximity;
-      -webkit-overflow-scrolling:touch;
-    }
-    .cards-hscroll::-webkit-scrollbar{ height:4px; }
-    .cards-hscroll::-webkit-scrollbar-track{ background:rgba(143,67,198,.08); border-radius:4px; }
-    .cards-hscroll::-webkit-scrollbar-thumb{ background:rgba(143,67,198,.35); border-radius:4px; }
-    .cards-hscroll .card{
-      flex:0 0 min(72%, 260px);
-      scroll-snap-align:start;
-      min-height:90px;
-    }
-    .card-wide{ min-height:auto !important; }
-    .list-hscroll{
-      display:flex;
-      gap:10px;
-      overflow-x:auto;
-      padding:2px 0 6px;
-      margin:0;
-      padding-left:20px;
-      padding-right:18px;
-      scroll-snap-type:x proximity;
-      -webkit-overflow-scrolling:touch;
-      flex-direction:row;
-    }
-    .list-hscroll .tile{ flex:0 0 min(85%, 320px); scroll-snap-align:start; }
-
-    .card{
-      border-radius:var(--radius);
-      --tone: rgba(255,255,255,.12);
-      background:var(--panel);
-      border:1px solid var(--stroke);
-      padding:14px 14px 12px;
-      box-shadow:0 10px 24px rgba(0,0,0,.22);
-      cursor:pointer;
-      transition:transform .22s var(--ease), background .22s var(--ease), border-color .22s var(--ease);
-      position:relative; overflow:hidden;
-      min-height:96px;
-    }
-    .card:hover{ transform:translateY(-2px); border-color:rgba(143,67,198,.25); background:var(--panel2); }
-
-    /* Color tones per block — палитра градиента */
-    .card[data-tone="gold"]{ --tone: rgba(83,219,198,.22); }
-    .card[data-tone="purple"]{ --tone: rgba(152,120,219,.22); }
-    .card[data-tone="cyan"]{ --tone: rgba(104,164,206,.22); }
-    .card[data-tone="blue"]{ --tone: rgba(143,67,198,.22); }
-    .card[data-tone="red"]{ --tone: rgba(255,74,110,.20); }
-    .card[data-tone="green"]{ --tone: rgba(83,219,198,.18); }
-
-    .card{ box-shadow:0 10px 24px rgba(0,0,0,.2), 0 0 0 1px rgba(143,67,198,.08); }
-    .card:before{
-      content:"";
-      position:absolute; inset:-2px;
-      background:
-        radial-gradient(760px 240px at 0% 0%, var(--tone), transparent 60%),
-        radial-gradient(700px 240px at 100% 100%, rgba(143,67,198,.14), transparent 62%),
-        radial-gradient(520px 260px at 70% 10%, rgba(104,164,206,.1), transparent 62%);
-      opacity:.92;
-      pointer-events:none;
+    .pill:hover{
+      transform: translateY(-1px);
+      background: radial-gradient(circle at 0 0, rgba(70,205,202,.24), rgba(117,105,180,.14));
+      box-shadow: 0 10px 26px rgba(70,205,202,.26);
     }
 
-    /* Corner icon */
-    .card:after{
-      content: attr(data-ico);
-      position:absolute;
-      top:10px; right:10px;
-      width:30px; height:30px;
-      border-radius:12px;
-      display:flex; align-items:center; justify-content:center;
-      font-size:14px;
-      color:rgba(255,255,255,.9);
-      background:rgba(143,67,198,.22);
-      border:1px solid rgba(143,67,198,.28);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      box-shadow: 0 12px 22px rgba(0,0,0,.18);
-      opacity:.92;
-      pointer-events:none;
-    }
-    .card:not([data-ico]):after{ display:none; }
+    .container{ max-width:560px; margin:0 auto; padding: 14px 16px 10px; }
 
-    /* Prevent icon overlap with long titles */
-    .card-inner{ position:relative; padding-right:56px; }
-    .card h3{
-      margin:0 0 6px;
-      font-size:14px;
-      font-weight:900;
-      letter-spacing:.2px;
-      display:-webkit-box;
-      -webkit-line-clamp:2;
-      -webkit-box-orient:vertical;
-      overflow:hidden;
-    }
-    .card p{ margin:0; font-size:12px; color:rgba(255,255,255,.64); line-height:1.35; }
-
-    .chip{
-      margin-top:10px;
-      display:inline-flex; align-items:center; gap:6px;
-      padding:7px 10px;
-      border-radius:999px;
-      background:rgba(143,67,198,.18);
-      border:1px solid rgba(143,67,198,.22);
-      color:rgba(255,255,255,.88);
-      font-size:11px; letter-spacing:.2px;
-    }
+    .view{ display:none; animation: fade .24s var(--ease) both; }
+    .view.active{ display:block; }
+    @keyframes fade{ from{opacity:0; transform: translateY(10px)} to{opacity:1; transform: translateY(0)} }
 
     .hero{
-      margin-top: 14px;
-      border-radius: var(--radius2);
-      background: linear-gradient(135deg, rgba(143,67,198,.1), rgba(104,164,206,.06));
-      border: 1px solid rgba(143,67,198,.2);
-      overflow:hidden;
+      border-radius: 24px;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.98), rgba(255,255,255,.96));
+      border: 1px solid rgba(70,205,202,.20);
       box-shadow: var(--shadow);
-      position:relative;
+      overflow: hidden;
+      position: relative;
     }
-    /* Блок «База Психомагии» на главной — потемнее */
-    #view-main .hero{
-      background: linear-gradient(135deg, rgba(28,22,42,.85), rgba(24,28,48,.82));
-      border: 1px solid rgba(143,67,198,.25);
-      box-shadow: 0 16px 40px rgba(0,0,0,.35);
-    }
-    #view-main .hero:before{ opacity:1; }
     .hero:before{
       content:"";
-      position:absolute; inset:-2px;
+      position: absolute;
+      inset: -2px;
       background:
-        radial-gradient(900px 500px at 50% 100%, rgba(143,67,198,.28), rgba(107,45,149,.14), transparent 58%),
-        radial-gradient(900px 600px at 20% 0%, rgba(83,219,198,.32), transparent 55%),
-        radial-gradient(800px 600px at 110% 30%, rgba(143,67,198,.3), transparent 60%),
-        radial-gradient(700px 500px at 60% 120%, rgba(104,164,206,.28), transparent 60%),
-        radial-gradient(600px 400px at 5% 80%, rgba(152,120,219,.22), transparent 55%);
-      opacity:.95;
+        radial-gradient(900px 600px at 20% 0%, rgba(70,205,202,.28), transparent 55%),
+        radial-gradient(800px 600px at 110% 30%, rgba(117,105,180,.26), transparent 60%),
+        radial-gradient(700px 500px at 60% 120%, rgba(70,205,202,.24), transparent 60%);
+      opacity: .95;
+      pointer-events: none;
     }
-    /* subtle watermark illustration */
-    .hero:after{
-      content:"";
-      position:absolute;
-      right:-18px; top:-18px;
-      width:160px; height:160px;
-      opacity:.22;
-      background-repeat:no-repeat;
-      background-size:contain;
-      pointer-events:none;
-      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cdefs%3E%3CradialGradient id='g' cx='35%25' cy='35%25' r='70%25'%3E%3Cstop offset='0%25' stop-color='%2353DBC6' stop-opacity='.9'/%3E%3Cstop offset='40%25' stop-color='%2368A4CE' stop-opacity='.5'/%3E%3Cstop offset='70%25' stop-color='%238f43c6' stop-opacity='.35'/%3E%3Cstop offset='100%25' stop-color='%239878DB' stop-opacity='.0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='102' cy='92' r='66' fill='url(%23g)'/%3E%3Cpath d='M40 120c30-34 92-34 122 0' fill='none' stroke='white' stroke-opacity='.35' stroke-width='4' stroke-linecap='round'/%3E%3Cpath d='M60 78c22 18 58 18 80 0' fill='none' stroke='white' stroke-opacity='.22' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E");
-    }
-
-    .hero-inner{ position:relative; padding:18px 18px 16px; }
+    .hero-inner{ position: relative; padding: 16px 16px 14px; }
 
     .badge{
-      display:inline-flex; align-items:center; gap:8px;
-      padding:8px 10px;
-      border-radius:999px;
-      background:rgba(143,67,198,.2);
-      border:1px solid rgba(143,67,198,.28);
-      color:rgba(255,255,255,.9);
-      font-size:12px; letter-spacing:.2px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(70,205,202,.18), rgba(117,105,180,.20));
+      border: 1px solid rgba(70,205,202,.28);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .15px;
     }
-    .glow-dot{
-      width:8px;height:8px;border-radius:999px;
-      background:var(--gradient-purple);
-      box-shadow:0 0 18px rgba(143,67,198,.5), 0 0 12px rgba(107,45,149,.35);
-      animation:pulse 2.2s var(--ease) infinite;
+    .dot{
+      width: 8px; height: 8px; border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      box-shadow: 0 0 18px rgba(70,205,202,.75);
+      animation: pulse 2.2s var(--ease) infinite;
+      flex: 0 0 auto;
     }
     @keyframes pulse{ 0%{transform:scale(1);opacity:1} 50%{transform:scale(1.18);opacity:.75} 100%{transform:scale(1);opacity:1} }
 
-    .hero-title{ margin:10px 0 0; font-size:19px; line-height:1.18; letter-spacing:.2px; font-weight:950; }
-    .hero-text{ margin:10px 0 0; color:rgba(255,255,255,.78); font-size:14px; line-height:1.45; }
-    .hero-compact .hero-inner{ padding:14px 16px 12px; }
-    .hero-compact .hero-title{ font-size:17px; margin-top:8px; }
-    .hero-compact .hero-text{ font-size:13px; margin-top:6px; -webkit-line-clamp:2; display:-webkit-box; -webkit-box-orient:vertical; overflow:hidden; }
-    .hero-compact .cta-row{ margin-top:12px; }
+    .hero-title{ margin: 10px 0 0; font-size: 18px; line-height: 1.18; font-weight: 950; letter-spacing: .2px; color: var(--text); }
+    .hero-text{ margin: 10px 0 0; font-size: 14px; line-height: 1.45; color: var(--muted); }
 
-    .cta-row{ margin-top:14px; display:flex; gap:10px; flex-wrap:wrap; }
-    .cta-row--three{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
-    .cta-row--three .btn{ min-height:72px; flex-direction:column; justify-content:center; text-align:center; padding:12px 8px; }
-    .cta-row--three .btn .icon{ margin-bottom:4px; }
-    .cards-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:0; padding:0; }
-    .cards-grid .card{ min-height:100px; }
+    .cta{ display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
     .btn{
-      border:none; outline:none; cursor:pointer; user-select:none;
-      padding:12px 14px; border-radius:16px;
-      font-weight:900; font-size:13px;
-      transition:transform .2s var(--ease), filter .2s var(--ease), background .2s var(--ease);
-      display:inline-flex; align-items:center; gap:10px;
+      border: none; outline: none;
+      cursor: pointer;
+      user-select: none;
+      padding: 12px 14px;
+      border-radius: 16px;
+      font-size: 13px;
+      font-weight: 950;
+      letter-spacing: .12px;
+      transition: transform .18s var(--ease), filter .18s var(--ease), background .18s var(--ease), box-shadow .18s var(--ease);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
     }
-    .btn:active{ transform:translateY(1px) scale(.99); }
+    .btn:active{ transform: translateY(1px) scale(.99); }
     .btn-primary{
-      color:#040406;
-      background:linear-gradient(135deg, var(--accent1), var(--accent1-light));
-      box-shadow:0 14px 32px rgba(83,219,198,.25);
-      position:relative; overflow:hidden;
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      box-shadow:
+        0 14px 40px rgba(117,105,180,.40),
+        0 0 20px rgba(70,205,202,.65);
     }
-    .btn-primary:before{
+    .btn-primary:hover{
+      filter: brightness(1.05);
+      box-shadow:
+        0 18px 46px rgba(117,105,180,.46),
+        0 0 28px rgba(70,205,202,.8);
+    }
+    .btn-ghost{
+      color: var(--text);
+      background: radial-gradient(circle at 0 0, rgba(70,205,202,.18), rgba(117,105,180,.08));
+      border: 1px solid rgba(70,205,202,.24);
+    }
+
+    .st{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 16px 2px 10px;
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: .28px;
+      color: var(--text);
+    }
+    .st small{ font-size: 12px; color: var(--muted2); font-weight: 900; }
+
+    .grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .card{
+      border-radius: var(--r);
+      background: var(--panel);
+      border: 1px solid var(--stroke);
+      box-shadow:
+        0 10px 26px rgba(117,105,180,.16),
+        0 0 0 1px rgba(70,205,202,.10);
+      padding: 14px;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform .2s var(--ease), background .2s var(--ease), border-color .2s var(--ease);
+      min-height: 96px;
+    }
+    .card:hover{
+      transform: translateY(-2px);
+      background: var(--panel2);
+      border-color: var(--stroke-strong);
+      box-shadow:
+        0 16px 40px rgba(117,105,180,.26),
+        0 0 0 1px rgba(70,205,202,.20);
+    }
+
+    .card[data-tone="gold"]{ --tone: rgba(117,105,180,.20); }
+    .card[data-tone="cyan"]{ --tone: rgba(70,205,202,.22); }
+    .card[data-tone="purple"]{ --tone: rgba(117,105,180,.24); }
+    .card[data-tone="red"]{ --tone: rgba(70,205,202,.24); }
+
+    .card:before{
       content:"";
-      position:absolute; inset:-40px;
-      background:radial-gradient(circle at 30% 30%, rgba(255,255,255,.55), transparent 45%);
-      opacity:.22; transform:translateX(-20px);
+      position: absolute;
+      inset: -2px;
+      background:
+        radial-gradient(760px 240px at 0% 0%, var(--tone, rgba(70,205,202,.14)), transparent 60%),
+        radial-gradient(700px 240px at 100% 100%, rgba(117,105,180,.10), transparent 62%);
+      opacity: .95;
+      pointer-events: none;
     }
-    .btn-secondary{
-      color:rgba(255,255,255,.92);
-      background:rgba(143,67,198,.12);
-      border:1px solid rgba(143,67,198,.25);
+
+    .c-ico{
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 30px;
+      height: 30px;
+      border-radius: 12px;
+      background: radial-gradient(circle at 0 0, rgba(70,205,202,.26), rgba(117,105,180,.24));
+      border: 1px solid rgba(70,205,202,.34);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: var(--accent);
+      box-shadow: 0 10px 24px rgba(117,105,180,.35);
+      pointer-events: none;
     }
 
-    .icon{ width:18px;height:18px; display:inline-flex; align-items:center; justify-content:center; opacity:.9; }
+    .card h3{ margin: 0 0 6px; font-size: 13px; font-weight: 950; letter-spacing: .2px; padding-right: 42px; color: var(--text); }
+    .card p{ margin: 0; font-size: 12px; color: var(--muted); line-height: 1.35; padding-right: 42px; }
 
-    /* Views */
-    .view{ display:none; animation:fadeIn .28s var(--ease) both; }
-    .view.active{ display:block; }
-    @keyframes fadeIn{ from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:translateY(0)} }
+    .card h3, .card p{ overflow-wrap: anywhere; }
 
-    .backrow{ display:none; }
-    .backbtn{
-      display:inline-flex; align-items:center; gap:10px;
-      padding:10px 12px;
-      min-height:44px;
-      border-radius:14px;
-      background:rgba(104,164,206,.1);
-      border:1px solid rgba(143,67,198,.2);
-      color:rgba(255,255,255,.92);
-      font-size:12px;
-      cursor:pointer;
-      transition:transform .2s var(--ease), background .2s var(--ease);
+    .list{ display: flex; flex-direction: column; gap: 10px; }
+    .tile{
+      border-radius: 18px;
+      background: radial-gradient(circle at 0 0, rgba(70,205,202,.18), rgba(117,105,180,.10));
+      border: 1px solid rgba(70,205,202,.22);
+      padding: 14px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      cursor: pointer;
+      transition: transform .2s var(--ease), background .2s var(--ease), border-color .2s var(--ease), box-shadow .2s var(--ease);
     }
-    .backbtn:hover{ transform:translateY(-1px); background:rgba(143,67,198,.14); }
+    .tile:hover{
+      transform: translateY(-2px);
+      background: radial-gradient(circle at 0 0, rgba(70,205,202,.24), rgba(117,105,180,.16));
+      border-color: rgba(70,205,202,.30);
+      box-shadow: 0 14px 34px rgba(117,105,180,.30);
+    }
 
-    .page-title{ margin:0; font-size:18px; font-weight:950; letter-spacing:.2px; }
+    .t-ico{
+      width: 38px; height: 38px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(70,205,202,.26), rgba(117,105,180,.24));
+      border: 1px solid rgba(70,205,202,.30);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+    }
+    .t-main{ flex: 1; min-width: 0; }
+    .t-title{ margin: 0; font-size: 13px; font-weight: 950; letter-spacing: .2px; color: var(--text); }
+    .t-sub{ margin: 6px 0 0; font-size: 12px; color: var(--muted); line-height: 1.35; }
 
-    /* Testimonials */
     .hscroll{
-      display:flex;
-      gap:12px;
-      overflow-x:auto;
-      padding: 2px 2px 4px;
-      scroll-snap-type:x mandatory;
-      -webkit-overflow-scrolling:touch;
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding: 2px 2px 6px;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
     }
-    .hscroll::-webkit-scrollbar{ height:0; }
+    .hscroll::-webkit-scrollbar{ height: 0; }
+
     .review{
-      flex: 0 0 min(86%, 420px);
-      scroll-snap-align:start;
+      flex: 0 0 min(88%, 440px);
+      scroll-snap-align: start;
       border-radius: 22px;
-      background: rgba(32,24,48,.78);
-      border: 1px solid rgba(143,67,198,.2);
-      box-shadow: 0 16px 40px rgba(0,0,0,.32);
-      padding: 14px 14px 12px;
-      position:relative;
-      overflow:hidden;
+      background: rgba(255,255,255,.96);
+      border: 1px solid rgba(70,205,202,.20);
+      box-shadow: 0 18px 46px rgba(117,105,180,.26);
+      padding: 14px;
+      position: relative;
+      overflow: hidden;
     }
     .review:before{
       content:"";
-      position:absolute; inset:-2px;
+      position: absolute;
+      inset: -2px;
       background:
-        radial-gradient(820px 360px at 0% 0%, rgba(83,219,198,.2), transparent 60%),
-        radial-gradient(820px 360px at 100% 100%, rgba(143,67,198,.18), transparent 62%),
-        radial-gradient(520px 260px at 70% 10%, rgba(104,164,206,.14), transparent 62%),
-        radial-gradient(400px 200px at 50% 100%, rgba(152,120,219,.1), transparent 55%);
-      opacity:.92;
-      pointer-events:none;
+        radial-gradient(820px 360px at 0% 0%, rgba(70,205,202,.22), transparent 60%),
+        radial-gradient(820px 360px at 100% 100%, rgba(117,105,180,.20), transparent 62%);
+      opacity: .92;
+      pointer-events: none;
     }
-    .review-top{ position:relative; display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
-    .review-name{ margin:0; font-size:13px; font-weight:950; letter-spacing:.2px; }
-    .review-city{ margin:0; font-size:12px; color:rgba(255,255,255,.62); font-weight:800; white-space:nowrap; }
-    .review-text{ position:relative; margin:10px 0 0; font-size:13px; line-height:1.5; color:rgba(255,255,255,.78); white-space:pre-wrap; }
-    .review-mark{
-      position:absolute;
-      top:10px; right:10px;
-      width:30px; height:30px;
-      border-radius:12px;
-      display:flex; align-items:center; justify-content:center;
-      font-size:14px;
-      color:rgba(255,255,255,.88);
-      background:rgba(143,67,198,.22);
-      border:1px solid rgba(143,67,198,.28);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      box-shadow: 0 12px 22px rgba(0,0,0,.18);
-      opacity:.92;
-      pointer-events:none;
-    }
+    .review-top{ position: relative; display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+    .review-name{ margin: 0; font-size: 13px; font-weight: 950; letter-spacing: .2px; color: var(--text); }
+    .review-city{ margin: 0; font-size: 12px; color: var(--muted); font-weight: 900; white-space: nowrap; }
+    .review-text{ position: relative; margin: 10px 0 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
 
-    /* Tiles (lists) */
-    .list{ display:flex; flex-direction:column; gap:10px; }
-    .tile{
-      border-radius:18px;
-      background:rgba(143,67,198,.08);
-      border:1px solid rgba(143,67,198,.18);
-      padding:14px;
-      display:flex; gap:12px; align-items:flex-start;
-      cursor:pointer;
-      transition:transform .22s var(--ease), background .22s var(--ease), border-color .22s var(--ease);
-    }
-    .tile:hover{ transform:translateY(-2px); background:rgba(143,67,198,.12); border-color:rgba(143,67,198,.28); }
-    .tile-icon{
-      width:38px;height:38px;
-      border-radius:14px;
-      background:rgba(143,67,198,.2);
-      border:1px solid rgba(143,67,198,.25);
-      display:flex; align-items:center; justify-content:center;
-      flex:0 0 auto;
-      position:relative; overflow:hidden;
-    }
-    .tile-icon:before{
-      content:"";
-      position:absolute; inset:-20px;
-      background:
-        radial-gradient(circle at 30% 30%, rgba(83,219,198,.22), transparent 58%),
-        radial-gradient(circle at 70% 70%, rgba(104,164,206,.18), transparent 60%),
-        radial-gradient(circle at 50% 50%, rgba(143,67,198,.16), transparent 58%);
-      opacity:.85;
-    }
-    .tile-main{ flex:1; min-width:0; }
-    .tile-title{ margin:0; font-size:13px; font-weight:950; letter-spacing:.2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .tile-sub{ margin:6px 0 0; font-size:12px; color:rgba(255,255,255,.62); line-height:1.35; }
-    .tile-actions{ display:flex; flex-direction:column; gap:8px; align-items:flex-end; }
-    .tile-icon-svg{ display:inline-flex; align-items:center; justify-content:center; }
-    .tile-icon-svg svg{ width:20px; height:20px; fill:currentColor; }
-    .fav{
-      width:34px;height:34px;
-      border-radius:14px;
-      background:rgba(104,164,206,.1);
-      border:1px solid rgba(143,67,198,.2);
-      display:flex; align-items:center; justify-content:center;
-      transition:transform .2s var(--ease), background .2s var(--ease), border-color .2s var(--ease);
-    }
-    .fav:hover{ transform:translateY(-1px); background:rgba(143,67,198,.14); border-color:rgba(143,67,198,.3); }
-    .fav.on{ background:rgba(83,219,198,.2); border-color:rgba(83,219,198,.4); box-shadow:0 0 18px rgba(83,219,198,.22); color:var(--accent1); }
-    .fav svg{ width:18px; height:18px; flex-shrink:0; fill:currentColor; }
-    .icon svg{ width:18px; height:18px; display:block; fill:currentColor; }
-
-    /* Bottom nav — выше от низа, чтобы не мешал */
+    /* Bottom nav — белый таббар, иконка + подпись, активная вкладка фиолетовая */
     .bottom-nav{
-      position:fixed; left:0; right:0; bottom:0; z-index:7;
-      padding:20px 20px calc(20px + env(safe-area-inset-bottom));
-      display:flex;
-      justify-content:center;
-      align-items:center;
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      z-index: 12;
+      padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
-    .nav{
-      max-width:min(560px, calc(100vw - 40px));
-      width:100%;
-      display:flex;
-      justify-content:space-around;
-      align-items:stretch;
-      gap:0;
-      padding:6px 8px;
-      background:rgba(32,24,48,.95);
-      border-radius:999px;
-      border:1px solid rgba(143,67,198,.2);
-      box-shadow:0 4px 24px rgba(0,0,0,.3), 0 0 40px rgba(143,67,198,.08);
-      backdrop-filter:blur(20px);
-      -webkit-backdrop-filter:blur(20px);
+    .bottom-nav .nav{
+      max-width: min(560px, calc(100vw - 40px));
+      width: 100%;
+      display: flex;
+      justify-content: space-around;
+      align-items: stretch;
+      gap: 0;
+      padding: 6px 8px;
+      background:
+        radial-gradient(circle at 0 0, rgba(70,205,202,.20), rgba(117,105,180,.22));
+      border-radius: 999px;
+      border: 1px solid rgba(70,205,202,.32);
+      box-shadow:
+        0 8px 30px rgba(117,105,180,.32),
+        0 0 0 1px rgba(70,205,202,.26);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
     }
     .nav-item{
-      position:relative;
-      flex:1;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      gap:2px;
-      padding:5px 4px;
-      min-height:40px;
-      color:rgba(255,255,255,.55);
-      font-size:9px;
-      font-weight:600;
-      letter-spacing:.02px;
-      text-align:center;
-      cursor:pointer;
-      border:none;
-      background:transparent;
-      border-radius:10px;
-      transition:color .2s var(--ease);
-      user-select:none;
-      -webkit-tap-highlight-color:transparent;
+      position: relative;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      padding: 8px 10px;
+      min-height: 44px;
+      color: rgba(117,105,180,.70);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .02px;
+      text-align: center;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      border-radius: 999px;
+      transition: color .2s var(--ease), background .2s var(--ease), box-shadow .2s var(--ease), transform .2s var(--ease);
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
     .nav-ico{
-      width:18px;
-      height:18px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      flex-shrink:0;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
     }
     .nav-ico svg{
-      width:100%;
-      height:100%;
-      stroke:currentColor;
-      fill:none;
-      stroke-width:1.8;
-      stroke-linecap:round;
-      stroke-linejoin:round;
-      transition:stroke .2s var(--ease);
+      width: 100%;
+      height: 100%;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: stroke .2s var(--ease);
     }
-    .nav-label{ font-size:9px; }
-    .nav-item:hover{ color:rgba(255,255,255,.8); }
+    .nav-label{ font-size: 10px; }
+    .nav-item:hover{
+      color: var(--accent);
+      transform: translateY(-1px);
+    }
     .nav-item.active{
-      color:#53DBC6;
-      background:transparent;
-      box-shadow:none;
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      box-shadow:
+        0 8px 22px rgba(117,105,180,.32),
+        0 0 12px rgba(70,205,202,.55);
+      transform: translateY(-1px);
     }
-    .nav-item.active .nav-ico svg{ stroke:#53DBC6; }
+    .nav-item.active .nav-ico svg{ stroke: #fff; }
 
-    /* Toast */
-    .toast{
-      position:fixed;
-      left:50%;
-      bottom:108px;
-      transform:translateX(-50%);
-      padding:12px 14px;
-      border-radius:16px;
-      background:rgba(36,24,52,.88);
-      border:1px solid rgba(143,67,198,.25);
-      color:rgba(255,255,255,.92);
-      font-size:12px;
-      opacity:0;
-      pointer-events:none;
-      transition:opacity .25s var(--ease), transform .25s var(--ease);
-      max-width:86vw;
-      box-shadow:0 12px 30px rgba(0,0,0,.35);
-      backdrop-filter:blur(14px);
-      -webkit-backdrop-filter:blur(14px);
-      z-index:10;
-      font-weight:800;
-      letter-spacing:.1px;
-    }
-    .toast.show{ opacity:1; transform:translateX(-50%) translateY(-4px); }
-
-    /* Preview modal */
+    /* Modal (preview) */
     .modal{
-      position:fixed;
-      inset:0;
-      display:none;
-      align-items:center;
-      justify-content:center;
-      background:rgba(12,8,24,.65);
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(117,105,180,.24);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      z-index:20;
-      padding:20px;
+      z-index: 30;
+      padding: 18px;
     }
-    .modal.show{ display:flex; }
+    .modal.show{ display: flex; }
     .modal-card{
-      width:min(640px, 96vw);
-      border-radius:22px;
-      background:rgba(32,24,48,.9);
-      border:1px solid rgba(143,67,198,.25);
-      box-shadow:0 30px 80px rgba(0,0,0,.5), 0 0 60px rgba(143,67,198,.1);
-      overflow:hidden;
+      width: min(640px, 96vw);
+      border-radius: 22px;
+      background: rgba(255,255,255,.98);
+      border: 1px solid rgba(70,205,202,.26);
+      box-shadow: 0 30px 80px rgba(117,105,180,.32);
+      overflow: hidden;
     }
     .modal-head{
-      padding:14px 16px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      border-bottom:1px solid rgba(143,67,198,.15);
-      background:linear-gradient(180deg, rgba(143,67,198,.1), rgba(104,164,206,.06));
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid rgba(70,205,202,.20);
+      background: linear-gradient(180deg, rgba(70,205,202,.16), rgba(117,105,180,.18));
     }
-    .modal-title{ margin:0; font-size:13px; font-weight:950; letter-spacing:.25px; }
-    .modal-body{ padding:14px 16px 18px; color:rgba(255,255,255,.78); font-size:13px; line-height:1.5; }
-    .k{ color:rgba(255,255,255,.92); font-weight:900; }
+    .modal-title{ margin: 0; font-size: 13px; font-weight: 950; letter-spacing: .25px; color: var(--text); }
+    .modal-body{ padding: 14px 16px 18px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .k{ color: var(--text); font-weight: 950; }
 
-    /* Мобильная адаптация */
-    @media (max-width: 480px){
-      .container{ padding:12px 14px; }
-      .topbar-inner{ padding:12px 14px 10px; }
-      .section-title{ margin:12px 2px 8px; font-size:12px; }
-      .cta-row--three{ grid-template-columns:1fr 1fr 1fr; gap:8px; }
-      .cta-row--three .btn{ min-height:64px; font-size:12px; padding:10px 6px; }
-      .cards-grid .card{ min-height:90px; }
-      .cards-hscroll{ margin:0; padding-left:18px; padding-right:16px; }
-      .cards-hscroll .card{ flex:0 0 min(78%, 240px); min-height:86px; }
-      .list-hscroll{ margin:0; padding-left:18px; padding-right:16px; }
-      .list-hscroll .tile{ flex:0 0 min(88%, 300px); min-width:260px; }
-      .hero-compact .hero-inner{ padding:12px 14px 10px; }
-      .btn{ padding:11px 12px; min-height:44px; font-size:12px; }
-      .nav-item{ min-height:38px; padding:4px 2px; font-size:9px; }
-      .nav-ico{ width:16px; height:16px; }
-      .bottom-nav{ padding:18px 16px calc(18px + env(safe-area-inset-bottom)); }
-      .nav{ padding:5px 6px; max-width:calc(100vw - 32px); }
-      .app{ padding-bottom: calc(82px + env(safe-area-inset-bottom)); }
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 100px;
+      transform: translateX(-50%);
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.98);
+      border: 1px solid rgba(70,205,202,.26);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 900;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .22s var(--ease), transform .22s var(--ease);
+      box-shadow: 0 14px 34px rgba(117,105,180,.30);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      z-index: 40;
+      max-width: 86vw;
+      text-align: center;
     }
+    .toast.show{ opacity: 1; transform: translateX(-50%) translateY(-4px); }
+
     @media (prefers-reduced-motion: reduce){
       *{ animation:none !important; transition:none !important; }
     }
-
-    /* ========== Светлая тема — акцент фиолетовый (без розового оттенка) ========== */
-    [data-theme="light"]{
-      --bg: #f0f4f8;
-      --panel: rgba(255,255,255,.96);
-      --panel2: rgba(248,252,255,.98);
-      --stroke: rgba(104,164,206,.18);
-      --stroke2: rgba(80,140,200,.22);
-      --text: #1c1c1e;
-      --muted: rgba(40,80,120,.78);
-      --muted2: rgba(50,100,150,.62);
-      --accent4: #4f2d91;
-      --accent4-dark: #3d2170;
-      --gradient-purple: linear-gradient(135deg, #8f43c6 0%, #6b2d95 50%, #5a2380 100%);
-      --accent-light: #5c2da0;
-      --purple-light: #5c2da0;
-      --purple-soft: rgba(79,45,145,.14);
-      --purple-soft2: rgba(92,45,160,.2);
-      --blue-soft: rgba(104,164,206,.18);
-      --blue-soft2: rgba(80,150,210,.25);
-      --shadow: 0 20px 60px rgba(104,164,206,.1);
-      --shadow2: 0 12px 30px rgba(80,140,200,.08);
-    }
-    [data-theme="light"] body{
-      background:
-        radial-gradient(1200px 900px at 20% -10%, rgba(104,164,206,.22), transparent 55%),
-        radial-gradient(1100px 900px at 90% 20%, rgba(83,219,198,.14), transparent 55%),
-        radial-gradient(1000px 800px at 70% 100%, rgba(104,164,206,.18), transparent 60%),
-        radial-gradient(900px 700px at 10% 70%, rgba(79,45,145,.12), transparent 50%),
-        linear-gradient(180deg, #e8eef5 0%, #ecf2f8 50%, #f0f4f8 100%);
-    }
-    [data-theme="light"] body:before{ opacity:.05; }
-    [data-theme="light"] .aurora:before,
-    [data-theme="light"] .aurora:after{
-      background:
-        radial-gradient(circle at 30% 30%, rgba(104,164,206,.22), transparent 58%),
-        radial-gradient(circle at 70% 60%, rgba(83,219,198,.18), transparent 58%),
-        radial-gradient(circle at 55% 80%, rgba(104,164,206,.2), transparent 62%),
-        radial-gradient(circle at 15% 70%, rgba(79,45,145,.12), transparent 55%);
-    }
-    [data-theme="light"] .topbar{
-      background:linear-gradient(180deg, rgba(248,252,255,.95) 0%, rgba(240,248,255,.88) 60%, rgba(240,248,255,0) 100%);
-      border-bottom:1px solid rgba(104,164,206,.14);
-    }
-    [data-theme="light"] .avatar{
-      background:linear-gradient(135deg, var(--blue-soft), rgba(104,164,206,.12));
-      border:1px solid rgba(104,164,206,.25);
-    }
-    [data-theme="light"] .avatar:before{
-      background:
-        radial-gradient(circle at 35% 25%, rgba(104,164,206,.28), transparent 55%),
-        radial-gradient(circle at 70% 65%, rgba(83,219,198,.2), transparent 58%),
-        radial-gradient(circle at 50% 50%, rgba(104,164,206,.18), transparent 62%);
-    }
-    [data-theme="light"] .avatar.initials{ color:var(--accent4); }
-    [data-theme="light"] .level{
-      color:var(--accent4);
-      background:var(--blue-soft);
-      border:1px solid rgba(104,164,206,.22);
-    }
-    [data-theme="light"] .pill{
-      background:var(--blue-soft);
-      border:1px solid rgba(104,164,206,.2);
-      color:var(--text);
-    }
-    [data-theme="light"] .pill:hover{ background:var(--blue-soft2); }
-    [data-theme="light"] .section-title{ color:rgba(30,60,100,.92); }
-    [data-theme="light"] .st-ico{
-      background:var(--blue-soft);
-      border:1px solid rgba(104,164,206,.2);
-    }
-    [data-theme="light"] .st-ico:before{
-      background:
-        radial-gradient(circle at 30% 30%, rgba(104,164,206,.25), transparent 60%),
-        radial-gradient(circle at 70% 70%, rgba(83,219,198,.2), transparent 62%),
-        radial-gradient(circle at 50% 50%, rgba(104,164,206,.18), transparent 58%);
-    }
-    [data-theme="light"] .st-note{ color:rgba(50,100,150,.6); }
-    [data-theme="light"] .card{
-      border-color:rgba(104,164,206,.16);
-      box-shadow:0 10px 24px rgba(104,164,206,.06), 0 0 0 1px rgba(104,164,206,.08);
-    }
-    [data-theme="light"] .card:hover{ border-color:rgba(104,164,206,.3); background:var(--panel2); }
-    [data-theme="light"] .card:after{ color:var(--accent4); background:var(--blue-soft); border:1px solid rgba(104,164,206,.22); }
-    [data-theme="light"] .card p{ color:rgba(40,80,120,.7); }
-    [data-theme="light"] .chip{
-      background:var(--blue-soft);
-      border:1px solid rgba(104,164,206,.22);
-      color:var(--accent4);
-    }
-    [data-theme="light"] .hero{
-      background:linear-gradient(135deg, rgba(248,252,255,.92), rgba(240,248,255,.88));
-      border:1px solid rgba(104,164,206,.2);
-    }
-    [data-theme="light"] #view-main .hero{
-      background:linear-gradient(135deg, rgba(40,70,120,.35), rgba(50,80,140,.3));
-      border:1px solid rgba(104,164,206,.3);
-      box-shadow:0 16px 40px rgba(40,80,140,.2);
-    }
-    [data-theme="light"] #view-main .hero .hero-title,
-    [data-theme="light"] #view-main .hero .hero-text,
-    [data-theme="light"] #view-main .hero .badge{ color:rgba(255,255,255,.95); }
-    [data-theme="light"] #view-main .hero .hero-text{ color:rgba(255,255,255,.85); }
-    [data-theme="light"] #view-main .hero .badge{ background:rgba(255,255,255,.2); border-color:rgba(255,255,255,.3); color:#fff; }
-    [data-theme="light"] .hero:before{
-      background:
-        radial-gradient(900px 600px at 20% 0%, rgba(104,164,206,.25), transparent 55%),
-        radial-gradient(800px 600px at 110% 30%, rgba(83,219,198,.18), transparent 60%),
-        radial-gradient(700px 500px at 60% 120%, rgba(104,164,206,.22), transparent 60%),
-        radial-gradient(600px 400px at 5% 80%, rgba(79,45,145,.1), transparent 55%);
-    }
-    [data-theme="light"] .badge{
-      background:var(--blue-soft);
-      border:1px solid rgba(104,164,206,.25);
-      color:var(--accent4);
-    }
-    [data-theme="light"] .hero-text{ color:rgba(40,80,120,.75); }
-    [data-theme="light"] .btn-secondary{
-      color:var(--text);
-      background:var(--blue-soft);
-      border:1px solid rgba(104,164,206,.22);
-    }
-    [data-theme="light"] .backbtn{
-      background:var(--blue-soft);
-      border:1px solid rgba(104,164,206,.2);
-      color:var(--text);
-    }
-    [data-theme="light"] .backbtn:hover{ background:var(--blue-soft2); }
-    [data-theme="light"] .page-title{ color:var(--text); }
-    [data-theme="light"] .review{
-      background:rgba(248,252,255,.92);
-      border:1px solid rgba(104,164,206,.16);
-      box-shadow:0 16px 40px rgba(104,164,206,.1);
-    }
-    [data-theme="light"] .review-name{ color:var(--text); }
-    [data-theme="light"] .review-city{ color:rgba(40,80,120,.6); }
-    [data-theme="light"] .review-text{ color:rgba(40,80,120,.75); }
-    [data-theme="light"] .review-mark{ background:var(--blue-soft); border:1px solid rgba(104,164,206,.22); color:var(--accent4); }
-    [data-theme="light"] .tile{
-      background:var(--blue-soft);
-      border:1px solid rgba(104,164,206,.16);
-    }
-    [data-theme="light"] .tile:hover{ background:var(--blue-soft2); border-color:rgba(104,164,206,.25); }
-    [data-theme="light"] .tile-title{ color:var(--text); }
-    [data-theme="light"] .tile-sub{ color:rgba(40,80,120,.65); }
-    [data-theme="light"] .tile-icon{
-      background:var(--blue-soft2);
-      border:1px solid rgba(104,164,206,.22);
-    }
-    [data-theme="light"] .fav{
-      background:var(--blue-soft);
-      border:1px solid rgba(104,164,206,.2);
-    }
-    [data-theme="light"] .fav:hover{ background:var(--blue-soft2); border-color:rgba(104,164,206,.3); }
-    [data-theme="light"] .nav{
-      background:rgba(248,252,255,.96);
-      border:1px solid rgba(104,164,206,.18);
-      box-shadow:0 4px 20px rgba(104,164,206,.1);
-    }
-    [data-theme="light"] .nav-item{ color:rgba(40,80,120,.6); }
-    [data-theme="light"] .nav-item:hover{ color:var(--accent4); }
-    [data-theme="light"] .nav-item.active{ color:var(--accent4); }
-    [data-theme="light"] .nav-item.active .nav-ico svg{ stroke:var(--accent4); }
-    [data-theme="light"] .glow-dot{
-      box-shadow:0 0 18px rgba(104,164,206,.45), 0 0 14px rgba(83,219,198,.35);
-    }
-    [data-theme="light"] .toast{
-      background:rgba(248,252,255,.98);
-      border:1px solid rgba(104,164,206,.22);
-      color:var(--text);
-      box-shadow:0 12px 30px rgba(104,164,206,.12);
-    }
-    [data-theme="light"] .modal{ background:rgba(40,80,120,.2); }
-    [data-theme="light"] .modal-card{
-      background:rgba(250,253,255,.98);
-      border:1px solid rgba(104,164,206,.2);
-      box-shadow:0 30px 80px rgba(104,164,206,.12);
-    }
-    [data-theme="light"] .modal-head{
-      border-bottom:1px solid rgba(104,164,206,.14);
-      background:linear-gradient(180deg, var(--blue-soft), rgba(104,164,206,.08));
-    }
-    [data-theme="light"] .modal-title{ color:var(--text); }
-    [data-theme="light"] .modal-body{ color:rgba(40,80,120,.8); }
-    [data-theme="light"] .k{ color:var(--text); }
-    [data-theme="light"] .cards-hscroll::-webkit-scrollbar-track{ background:var(--blue-soft); }
-    [data-theme="light"] .cards-hscroll::-webkit-scrollbar-thumb{ background:rgba(104,164,206,.35); }
-    [data-theme="light"] .profile-card{
-      background:rgba(248,252,255,.95);
-      border:1px solid rgba(104,164,206,.18);
-      box-shadow:0 8px 20px rgba(104,164,206,.1);
-    }
-    [data-theme="light"] .profile-card:hover{ background:rgba(245,252,255,.98); }
-    [data-theme="light"] .topbar-title{ color:rgba(30,60,100,.95); }
-    [data-theme="light"] .profile-arrow{ color:var(--accent4); }
   </style>
 </head>
 <body>
-<div class="aurora"></div>
+<div class="app" id="app">
 
-<div class="app">
-  <!-- TOP: название и карточка профиля (только на главной) -->
   <div class="topbar">
     <div class="topbar-inner">
-      <div class="topbar-row topbar-row--main">
+      <div class="topbar-row">
         <img src="https://i.postimg.cc/52k40X5F/lion-logo-color-1.png" alt="" class="topbar-logo" />
         <span class="topbar-title">Психомагия</span>
       </div>
@@ -968,8 +595,8 @@
         <div class="avatar" id="avatar" title="Фото пользователя" aria-label="Фото пользователя"></div>
         <div class="profile">
           <div class="name-row">
-            <p class="name" id="userName">Имя пользователя</p>
-            <p class="level" id="userLevel">Уровень чувственных знаний: 1</p>
+            <p class="name" id="userName">Гость</p>
+            <p class="level" id="userLevel">Уровень чувственных знаний: 7</p>
           </div>
         </div>
         <span class="profile-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 18l6-6-6-6"/></svg></span>
@@ -978,188 +605,232 @@
   </div>
 
   <div class="container">
-    <!-- VIEW: Главное -->
-    <section class="view active" id="view-main">
-      <div class="hero hero-compact">
+
+    <!-- VIEW: Сейчас -->
+    <section class="view active" id="view-now">
+      <div class="hero">
         <div class="hero-inner">
-          <span class="badge"><span class="glow-dot"></span> База Психомагии</span>
-          <h2 class="hero-title">Система, с которой начинается ясность.</h2>
-          <p class="hero-text">Вход в основу философии и ключевые материалы.</p>
-          <div class="cta-row cta-row--three">
-            <button class="btn btn-primary" id="btnBase"><span class="icon">✦</span><span>База</span></button>
-            <button class="btn btn-secondary" id="btnKeyVideos"><span class="icon">▶</span><span>Видео</span></button>
-            <button class="btn btn-primary" id="btnJoinFieldTop"><span class="icon">✺</span><span>Поле</span></button>
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+            <span class="badge"><span class="dot"></span> Сейчас</span>
+            <span class="badge">тонкий вход</span>
           </div>
-          <div class="cta-row" style="margin-top:8px;">
-            <button class="btn btn-secondary" id="btnWhyFieldTop"><span class="icon">◎</span><span>Что даёт Поле</span></button>
+          <h2 class="hero-title">Вы не случайно здесь.</h2>
+          <p class="hero-text">Это пространство создано так, чтобы мягко вести — от первого соприкосновения к глубине. Без шума. Без давления.</p>
+          <div class="cta">
+            <button class="btn btn-primary" id="btnGoDeeper"><span aria-hidden="true">✦</span><span>Сделать шаг глубже</span></button>
+            <button class="btn btn-ghost" id="btnTryFree"><span aria-hidden="true">▶</span><span>Открыть пробные материалы</span></button>
           </div>
         </div>
       </div>
 
-      <div class="section-title" style="margin-top:12px;"><span class="st-left"><span class="st-ico"><span>🌌</span></span>Карта Вселенной</span><span class="st-note">ориентир</span></div>
-      <div class="cards-grid">
-        <div class="card" data-route="now" data-tone="gold" data-ico="🔎"><div class="card-inner"><h3>Познать себя</h3><p>Ваша точка «сейчас»</p><span class="chip">Я сейчас</span></div></div>
-        <div class="card" data-route="path" data-tone="purple" data-ico="🧭"><div class="card-inner"><h3>Найти путь</h3><p>Карта уровней</p><span class="chip">Мой путь</span></div></div>
-        <div class="card" data-open="field" data-tone="cyan" data-ico="✺"><div class="card-inner"><h3>Поле Психомагии</h3><p>Доступ и поддержка</p><span class="chip">центр</span></div></div>
-        <div class="card" data-open="program_formula" data-tone="gold" data-ico="✦"><div class="card-inner"><h3>Формула счастья</h3><p>Ядро философии</p><span class="chip">старт</span></div></div>
+      <div class="st"><span>Пробные материалы</span><small>без оплаты</small></div>
+      <div class="grid">
+        <div class="card" data-tone="cyan" data-open="free_video_1">
+          <div class="c-ico" aria-hidden="true">▶</div>
+          <h3>Ключевое видео</h3>
+          <p>Первые 12 минут, которые меняют взгляд.</p>
+        </div>
+        <div class="card" data-tone="purple" data-open="free_text_1">
+          <div class="c-ico" aria-hidden="true">⌁</div>
+          <h3>Короткий текст</h3>
+          <p>Суть Психомагии — простыми словами.</p>
+        </div>
+        <div class="card" data-tone="gold" data-open="free_practice_1">
+          <div class="c-ico" aria-hidden="true">✧</div>
+          <h3>Демо-практика</h3>
+          <p>Ощутите эффект в теле и восприятии.</p>
+        </div>
+        <div class="card" data-tone="red" data-open="free_test_happiness">
+          <div class="c-ico" aria-hidden="true">☼</div>
+          <h3>Тест счастья</h3>
+          <p>Быстрый тест внутри Telegram.</p>
+        </div>
       </div>
 
-      <div class="section-title" style="margin-top:12px;"><span class="st-left"><span class="st-ico"><span>✨</span></span>Сегодня в Поле</span><span class="st-note">живое</span></div>
-      <div class="list list-hscroll" id="todayField"></div>
+      <div class="st"><span>Живые отзывы</span><small>полевики</small></div>
+      <div class="hscroll" id="reviews"></div>
 
-      <div class="section-title" style="margin-top:12px;"><span class="st-left"><span class="st-ico"><span>🗝</span></span>Персональные ключи</span><span class="st-note">интуиция</span></div>
-      <div class="cards-hscroll">
-        <div class="card" data-open="my_archetype" data-tone="gold" data-ico="🃏"><div class="card-inner"><h3>Мой архетип</h3><p>Колода карт</p><span class="chip">колода</span></div></div>
-        <div class="card" data-open="my_totem" data-tone="green" data-ico="🜃"><div class="card-inner"><h3>Тотемное животное</h3><p>Символ силы</p><span class="chip">тотем</span></div></div>
-        <div class="card" data-open="my_power_place" data-tone="cyan" data-ico="⛰"><div class="card-inner"><h3>Место силы</h3><p>Где раскрываетесь</p><span class="chip">пространство</span></div></div>
-        <div class="card" data-open="my_destiny_partner" data-tone="red" data-ico="∞"><div class="card-inner"><h3>Партнёр по судьбе</h3><p>Судьбоносные отношения</p><span class="chip">отношения</span></div></div>
-        <div class="card" data-open="my_crystallinity_level" data-tone="cyan" data-ico="◇"><div class="card-inner"><h3>Уровень кристальности</h3><p>Чистота намерения</p><span class="chip">кристальность</span></div></div>
-        <div class="card" data-open="my_purpose" data-tone="purple" data-ico="✦"><div class="card-inner"><h3>Моё предназначение</h3><p>Направление жизни</p><span class="chip">миссия</span></div></div>
-        <div class="card" data-open="my_superpowers" data-tone="gold" data-ico="⚡"><div class="card-inner"><h3>Сверхспособности</h3><p>Интуиция, ясность</p><span class="chip">дар</span></div></div>
-        <div class="card" data-open="shop" data-tone="gold" data-ico="⟡"><div class="card-inner"><h3>Магазин</h3><p>Артефакты, книги</p><span class="chip">магазин</span></div></div>
-      </div>
-
-      <div class="section-title" style="margin-top:12px;"><span class="st-left"><span class="st-ico"><span>✦</span></span>Базовая программа</span><span class="st-note">старт</span></div>
-      <div class="card card-wide" data-open="program_formula" data-tone="gold" data-ico="✦">
-        <div class="card-inner"><h3>Формула счастья</h3><p>Ядро философии и основа пути.</p><span class="chip">программа</span></div>
-      </div>
-
-      <div class="section-title" style="margin-top:12px;"><span class="st-left"><span class="st-ico"><span>🗺</span></span>Карта мастеров</span><span class="st-note">люди</span></div>
-      <div class="card card-wide" data-open="masters_map" data-tone="purple" data-ico="🗺">
-        <div class="card-inner"><h3>Карта мастеров</h3><p>Кто рядом, чем занимается.</p><span class="chip">карта</span></div>
-      </div>
-
-      <div class="section-title" style="margin-top:12px;"><span class="st-left"><span class="st-ico"><span>💬</span></span>Отзывы</span><span class="st-note">живые слова</span></div>
-      <div class="hscroll" id="reviewsList"></div>
-
-      <div class="section-title" style="margin-top:12px;"><span class="st-left"><span class="st-ico"><span>⟡</span></span>События</span><span class="st-note">живое</span></div>
-      <div class="cards-hscroll">
-        <div class="card" data-open="marathons" data-tone="gold" data-ico="⌁"><div class="card-inner"><h3>Марафоны</h3><p>Погружения</p><span class="chip">марафон</span></div></div>
-        <div class="card" data-open="retreats" data-tone="cyan" data-ico="☾"><div class="card-inner"><h3>Ретриты</h3><p>Онлайн</p><span class="chip">ретрит</span></div></div>
-        <div class="card" data-open="meetups" data-tone="red" data-ico="❤"><div class="card-inner"><h3>Встречи</h3><p>Вживую</p><span class="chip">встречи</span></div></div>
-        <div class="card" data-open="messages" data-tone="purple" data-ico="✺"><div class="card-inner"><h3>Послания</h3><p>Тексты ясности</p><span class="chip">послания</span></div></div>
+      <div class="st"><span>Если откликается</span><small>без давления</small></div>
+      <div class="hero">
+        <div class="hero-inner">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+            <span class="badge"><span class="dot"></span> Поле Психомагии</span>
+            <span class="badge">вход в сопровождение</span>
+          </div>
+          <h2 class="hero-title">Глубина раскрывается в Поле.</h2>
+          <p class="hero-text">Там появляются диагностика по фото, живые практики и ощущение, что вас действительно ведут.</p>
+          <div class="cta">
+            <button class="btn btn-primary" id="btnJoinField"><span aria-hidden="true">✦</span><span>Войти в Поле</span></button>
+            <button class="btn btn-ghost" id="btnWhyField"><span aria-hidden="true">◎</span><span>Что внутри</span></button>
+          </div>
+        </div>
       </div>
     </section>
 
-    <!-- VIEW: Диагностики -->
-    <section class="view" id="view-now">
-      <div class="backrow">
-        <button class="backbtn" data-route="main"><span class="icon">←</span><span>Назад</span></button>
-        <h2 class="page-title">Я сейчас</h2>
-      </div>
-
-      <div class="hero hero-compact">
+    <!-- VIEW: Глубже -->
+    <section class="view" id="view-deeper">
+      <div class="hero">
         <div class="hero-inner">
-          <span class="badge"><span class="glow-dot"></span> Познать себя</span>
-          <h2 class="hero-title">Ваша точка «сейчас».</h2>
-          <p class="hero-text">Тесты доступны сразу; глубинные расшифровки — в Поле.</p>
-          <div class="cta-row">
-            <button class="btn btn-primary" id="btnJoinField"><span class="icon">✦</span><span>Поле</span></button>
-            <button class="btn btn-secondary" id="btnWhyField"><span class="icon">◎</span><span>Зачем Поле</span></button>
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+            <span class="badge"><span class="dot"></span> Глубже</span>
+            <span class="badge">сопровождение</span>
+          </div>
+          <h2 class="hero-title">То, ради чего люди остаются.</h2>
+          <p class="hero-text">Здесь — формы сопровождения, которые дают ощущение точности: диагностика по фото, практики и расшифровки.</p>
+          <div class="cta">
+            <button class="btn btn-primary" id="btnPhotoDiag"><span aria-hidden="true">◈</span><span>Диагностика по фото</span></button>
+            <button class="btn btn-ghost" id="btnLivePractice"><span aria-hidden="true">✧</span><span>Ближайшая практика</span></button>
           </div>
         </div>
       </div>
 
-      <div class="section-title"><span class="st-left"><span class="st-ico"><span>🧪</span></span>Быстрые тесты</span><span class="st-note">вход</span></div>
-      <div class="cards-hscroll">
-        <div class="card" data-open="test_happiness" data-tone="gold" data-ico="☼"><div class="card-inner"><h3>Тест счастья</h3><p>В боте Telegram</p><span class="chip">бот</span></div></div>
-        <div class="card" data-open="test_libido" data-tone="red" data-ico="❤"><div class="card-inner"><h3>Тест либидо</h3><p>Уровень энергии</p><span class="chip">бот</span></div></div>
-        <div class="card" data-open="test_crystal" data-tone="cyan" data-ico="✧"><div class="card-inner"><h3>Тест кристальности</h3><p>Чистота и ясность</p><span class="chip">бот</span></div></div>
-        <div class="card" data-open="test_personality" data-tone="purple" data-ico="◈"><div class="card-inner"><h3>Диагностика личности</h3><p>Профиль</p><span class="chip">бот</span></div></div>
+      <div class="st"><span>Бесплатные тесты</span><small>быстрый вход</small></div>
+      <div class="grid">
+        <div class="card" data-tone="gold" data-open="test_happiness"><div class="c-ico" aria-hidden="true">☼</div><h3>Тест счастья</h3><p>Переход в Telegram-бота.</p></div>
+        <div class="card" data-tone="red" data-open="test_libido"><div class="c-ico" aria-hidden="true">❤</div><h3>Тест либидо</h3><p>Уровень энергии и состояния.</p></div>
+        <div class="card" data-tone="cyan" data-open="test_crystal"><div class="c-ico" aria-hidden="true">◇</div><h3>Тест кристальности</h3><p>Чистота намерения и ясность.</p></div>
+        <div class="card" data-tone="purple" data-open="test_personality"><div class="c-ico" aria-hidden="true">◈</div><h3>Диагностика личности</h3><p>Психологический профиль.</p></div>
       </div>
 
-      <div class="section-title"><span class="st-left"><span class="st-ico"><span>🔎</span></span>Глубинные диагностики</span><span class="st-note">в Поле</span></div>
-      <div class="list list-hscroll" id="diagList"></div>
+      <div class="st"><span>Закрытые диагностики</span><small>доступ в Поле</small></div>
+      <div class="list" id="diagList"></div>
+
+      <div class="st"><span>Мягкий шаг</span><small>в Поле</small></div>
+      <div class="hero">
+        <div class="hero-inner">
+          <h2 class="hero-title">Если вы чувствуете отклик — дальше будет легче.</h2>
+          <p class="hero-text">В Поле вы не просто читаете. Вы проживаете и получаете точные подсказки под вашу ситуацию.</p>
+          <div class="cta">
+            <button class="btn btn-primary" id="btnJoinField2"><span aria-hidden="true">✦</span><span>Войти в Поле</span></button>
+            <button class="btn btn-ghost" id="btnAskCare"><span aria-hidden="true">❤</span><span>Написать в заботу</span></button>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <!-- VIEW: Путь психомагии -->
-    <section class="view" id="view-path">
-      <div class="backrow">
-        <button class="backbtn" data-route="main"><span class="icon">←</span><span>Назад</span></button>
-        <h2 class="page-title">Путь психомагии</h2>
-      </div>
-
-      <div class="hero hero-compact">
+    <!-- VIEW: Пространство -->
+    <section class="view" id="view-space">
+      <div class="hero">
         <div class="hero-inner">
-          <span class="badge"><span class="glow-dot"></span> Карта эволюции</span>
-          <h2 class="hero-title">Путь духовного роста.</h2>
-          <p class="hero-text">Уровни, последовательность курсов и единицы мудрости.</p>
-          <div class="cta-row">
-            <button class="btn btn-primary" id="btnEvolution"><span class="icon">✦</span><span>Карта</span></button>
-            <button class="btn btn-secondary" id="btnCourses"><span class="icon">◈</span><span>Курсы</span></button>
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+            <span class="badge"><span class="dot"></span> Пространство</span>
+            <span class="badge">вселенная</span>
+          </div>
+          <h2 class="hero-title">Поле Психомагии — живой слой.</h2>
+          <p class="hero-text">Не «подписка на контент». Пространство, где ощущается уникальность: научно, духовно и нестандартно — в одном.</p>
+          <div class="cta">
+            <button class="btn btn-primary" id="btnJoinField3"><span aria-hidden="true">✦</span><span>Войти в Поле</span></button>
+            <button class="btn btn-ghost" id="btnHowWorks"><span aria-hidden="true">◎</span><span>Как устроено</span></button>
           </div>
         </div>
       </div>
 
-      <div class="section-title"><span>Библиотека</span><span class="st-note">ресурсы</span></div>
-      <div class="cards-hscroll">
-        <div class="card" data-open="techniques" data-tone="gold" data-ico="⟡"><div class="card-inner"><h3>Техники</h3><p>Действия для изменений</p><span class="chip">техники</span></div></div>
-        <div class="card" data-open="practices" data-tone="cyan" data-ico="◎"><div class="card-inner"><h3>Практики</h3><p>Регулярная настройка</p><span class="chip">практики</span></div></div>
-        <div class="card" data-open="books" data-tone="purple" data-ico="⌁"><div class="card-inner"><h3>Книги</h3><p>Текст, аудио</p><span class="chip">книги</span></div></div>
-        <div class="card" data-open="field" data-tone="gold" data-ico="✺"><div class="card-inner"><h3>Поле</h3><p>Подписка и формат</p><span class="chip">Поле</span></div></div>
+      <div class="st"><span>Что внутри Поля</span><small>коротко</small></div>
+      <div class="grid">
+        <div class="card" data-tone="gold" data-open="field_photo"><div class="c-ico" aria-hidden="true">◈</div><h3>Диагностика по фото</h3><p>Точка входа, которая «цепляет» точностью.</p></div>
+        <div class="card" data-tone="cyan" data-open="field_practices"><div class="c-ico" aria-hidden="true">✧</div><h3>Живые практики</h3><p>Состояние, которое остаётся с вами.</p></div>
+        <div class="card" data-tone="purple" data-open="field_library"><div class="c-ico" aria-hidden="true">⌁</div><h3>Библиотека</h3><p>Техники, практики, материалы.</p></div>
+        <div class="card" data-tone="red" data-open="field_people"><div class="c-ico" aria-hidden="true">❤</div><h3>Сообщество</h3><p>Единение и люди, с кем по пути.</p></div>
       </div>
 
-      <div class="section-title" style="margin-top:12px;"><span>Навигация</span><span class="st-note">карта</span></div>
-      <div class="list list-hscroll" id="pathList"></div>
+      <div class="st"><span>Книги Психомагии</span><small>форматы</small></div>
+      <div class="list" id="booksList"></div>
+
+      <div class="st"><span>Проводник</span><small>кратко</small></div>
+      <div class="hero">
+        <div class="hero-inner">
+          <h2 class="hero-title">Это знание передаётся живым присутствием.</h2>
+          <p class="hero-text">7 книг, научная база и опыт, который собирает человека в целое. В Поле — это чувствуется, а не «объясняется».</p>
+          <div class="cta">
+            <button class="btn btn-primary" id="btnJoinField4"><span aria-hidden="true">✦</span><span>Войти в Поле</span></button>
+            <button class="btn btn-ghost" id="btnProof"><span aria-hidden="true">◎</span><span>Факты и подтверждения</span></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="st"><span>Факты и подтверждения</span><small>для тех, кто любит ясность</small></div>
+      <div class="list">
+        <div class="tile" data-open="facts_proof">
+          <div class="t-ico" aria-hidden="true">◎</div>
+          <div class="t-main">
+            <p class="t-title">Психомагия: что это и на чём основано</p>
+            <p class="t-sub">Научная база, форматы, документы, доверие — коротко и без лишнего.</p>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <!-- VIEW: экран материала (универсальный) -->
+    <!-- VIEW: Item (универсальный) -->
     <section class="view" id="view-item">
-      <div class="backrow">
-        <button class="backbtn" id="btnBack"><span class="icon">←</span><span>Назад</span></button>
-        <h2 class="page-title" id="itemTitle">Раздел</h2>
-      </div>
-
-      <div class="hero hero-compact">
+      <div class="st" style="margin-top:10px;"><span id="itemTop">Раздел</span><small id="itemTag">—</small></div>
+      <div class="hero">
         <div class="hero-inner">
-          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-            <span class="badge" id="itemBadge"><span class="glow-dot"></span> Психомагия</span>
-            <span class="badge" id="itemTag">раздел</span>
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+            <span class="badge"><span class="dot"></span> Психомагия</span>
+            <span class="badge" id="itemBadge">раздел</span>
           </div>
-          <h2 class="hero-title" id="itemHeadline">…</h2>
+          <h2 class="hero-title" id="itemTitle">…</h2>
           <p class="hero-text" id="itemText">…</p>
-          <div class="cta-row">
-            <button class="btn btn-primary" id="itemOpen"><span class="icon">↗</span><span>Открыть</span></button>
-            <button class="btn btn-secondary" id="itemFav"><span class="icon"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span><span>В Избранное</span></button>
+          <div class="cta">
+            <button class="btn btn-primary" id="itemOpen"><span aria-hidden="true">↗</span><span>Открыть</span></button>
+            <button class="btn btn-ghost" id="itemBack"><span aria-hidden="true">←</span><span>Назад</span></button>
           </div>
         </div>
       </div>
-
-      <div class="section-title"><span>Содержание</span><span class="st-note">плейсхолдер</span></div>
-      <div class="list" id="itemContent"></div>
     </section>
 
-    <!-- VIEW: Избранное -->
-    <section class="view" id="view-favs">
-      <div class="backrow">
-        <button class="backbtn" data-route="main"><span class="icon">←</span><span>Назад</span></button>
-        <h2 class="page-title">Избранное</h2>
-      </div>
-      <div class="list" id="favList"></div>
-      <div id="favEmpty" style="display:none; margin-top:10px; color:rgba(255,255,255,.62); font-size:13px; line-height:1.45;">
-        Пока здесь пусто. Сохраняйте разделы и материалы по сердцу.
-      </div>
-    </section>
   </div>
 
-  <!-- Bottom nav (4 tabs, главное меню) — минималистичные иконки, подсветка активного -->
   <div class="bottom-nav">
     <div class="nav">
-      <div class="nav-item active" data-route="main">
-        <span class="nav-ico"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 10.5l9-7.5 9 7.5v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-11z"/><path d="M9 21v-6h6v6"/></svg></span>
-        <span class="nav-label">Главное</span>
+      <!-- Иконка раздела "Сейчас" -->
+      <!-- Вставить ссылку на иконку здесь -->
+      <!-- <img src="PUT_ICON_LINK_FOR_NOW_HERE" alt="Сейчас" /> -->
+      <!-- Если нужно заменить SVG, вставить SVG-код здесь -->
+      <div class="nav-item active" data-route="now">
+        <span class="nav-ico">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <!-- Осознанность / момент: концентрические круги и точка -->
+            <circle cx="12" cy="12" r="7" />
+            <circle cx="12" cy="12" r="3.5" />
+            <circle cx="12" cy="12" r="1.2" />
+          </svg>
+        </span>
+        <span class="nav-label">Сейчас</span>
       </div>
-      <div class="nav-item" data-route="now">
-        <span class="nav-ico"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg></span>
-        <span class="nav-label">Диагностики</span>
+
+      <!-- Иконка раздела "Глубже" -->
+      <!-- Вставить ссылку на иконку здесь -->
+      <!-- <img src="PUT_ICON_LINK_FOR_DEEPER_HERE" alt="Глубже" /> -->
+      <!-- Если нужно заменить SVG, вставить SVG-код здесь -->
+      <div class="nav-item" data-route="deeper">
+        <span class="nav-ico">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <!-- Глубина: слои и стрелка вниз внутрь -->
+            <path d="M5 7h14" />
+            <path d="M7 11h10" />
+            <path d="M9 15h6" />
+            <path d="M12 9v8" />
+            <path d="M9.5 15.5L12 18l2.5-2.5" />
+          </svg>
+        </span>
+        <span class="nav-label">Глубже</span>
       </div>
-      <div class="nav-item" data-route="path">
-        <span class="nav-ico"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 12C8 12 8 18 12 18C16 18 16 12 20 12"/><circle cx="4" cy="12" r="2.5"/><circle cx="4" cy="12" r="0.7"/><circle cx="20" cy="12" r="2.5"/><circle cx="20" cy="12" r="0.7"/></svg></span>
-        <span class="nav-label">Путь</span>
-      </div>
-      <div class="nav-item" data-route="favs">
-        <span class="nav-ico"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>
-        <span class="nav-label">Избранное</span>
+
+      <!-- Иконка раздела "Пространство" -->
+      <!-- Вставить ссылку на иконку здесь -->
+      <!-- <img src="PUT_ICON_LINK_FOR_SPACE_HERE" alt="Пространство" /> -->
+      <!-- Если нужно заменить SVG, вставить SVG-код здесь -->
+      <div class="nav-item" data-route="space">
+        <span class="nav-ico">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <!-- Поле / пространство: орбита и звезда -->
+            <ellipse cx="12" cy="13" rx="7.5" ry="4.2" />
+            <circle cx="8.5" cy="12" r="0.9" />
+            <path d="M16 5.5L16.7 7.3L18.5 8L16.7 8.7L16 10.5L15.3 8.7L13.5 8L15.3 7.3Z" />
+          </svg>
+        </span>
+        <span class="nav-label">Пространство</span>
       </div>
     </div>
   </div>
@@ -1167,123 +838,58 @@
   <div class="toast" id="toast">Готово</div>
 </div>
 
-<!-- Preview modal -->
-<div class="modal" id="modal">
-  <div class="modal-card">
-    <div class="modal-head">
-      <p class="modal-title">Предпросмотр прототипа</p>
-      <div class="pill" id="btnClose"><span class="icon">✕</span><span>Закрыть</span></div>
-    </div>
-    <div class="modal-body">
-      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
-        <button class="btn btn-primary" id="btnCopy"><span class="icon">⧉</span><span>Скопировать HTML</span></button>
-        <button class="btn btn-secondary" id="btnHow"><span class="icon">◎</span><span>Как открыть</span></button>
-        <button class="btn btn-secondary" id="btnFavs"><span class="icon"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span><span>Избранное</span></button>
-      </div>
-      <div id="howText" style="display:none;">
-        <div class="k">Как открыть и проверить тему:</div>
-        1) Локально: сохраните как <span class="k">miniapp.html</span> и откройте в браузере. <br/>
-        2) Тема на компьютере: Chrome → F12 → ⋮ → More tools → Rendering → «Emulate CSS media feature prefers-color-scheme» → light или dark. <br/>
-        3) GitHub Pages: загрузите репозиторий на GitHub, в настройках репо включите Pages (Source: main, /root). Ссылка будет <span class="k">https://ВАШ_ЛОГИН.github.io/ИМЯ_РЕПО/</span> (для index.html можно не писать в URL). <br/>
-        4) В Telegram: создайте бота (@BotFather), в кнопке меню укажите type: web_app, url: ваша ссылка с GitHub Pages. Откройте мини-приложение из бота — тема подстроится под тёмную/светлую тему в настройках Telegram (Настройки → Тема оформления). <br/>
-        5) Проверка темы по ссылке: откройте <span class="k">?theme=light</span> или <span class="k">?theme=dark</span> в конце URL, чтобы принудительно выбрать тему (например, на GitHub Pages: .../index.html?theme=light).
-      </div>
-      <div style="margin-top:10px;">
-        Здесь всё собрано в структуру, которую вы надиктовали. Ссылки пока плейсхолдеры — подключим реальные.
-      </div>
-    </div>
-  </div>
-</div>
-
 <script>
-  // =====================
-  // Boot (Telegram WebApp) + тема (тёмная/светлая)
-  // =====================
-  var tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
+  // NOTE: Previous error "Unexpected token '<'" was caused by broken <script> content.
+  // This file is now fully valid HTML + JS.
 
-  function getTheme() {
-    if (location.search.indexOf('theme=light') !== -1) return 'light';
-    if (location.search.indexOf('theme=dark') !== -1) return 'dark';
-    if (tg && tg.colorScheme) return tg.colorScheme; // в Telegram — автоматически по настройкам
-    // В браузере (без Telegram) — всегда тёмная тема для удобства просмотра
-    return 'dark';
-  }
-  function applyTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    if (tg) {
-      try {
-        var bg = theme === 'light' ? '#f4f4f5' : '#06060a';
-        if (tg.setHeaderColor) tg.setHeaderColor(bg);
-        if (tg.setBackgroundColor) tg.setBackgroundColor(bg);
-      } catch (e) {}
-    }
-  }
-
-  var theme = getTheme();
-  applyTheme(theme);
+  const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
   if (tg) {
     try {
       tg.ready();
       tg.expand();
-      // Сразу реагировать на смену темы в настройках Telegram (без перезапуска мини-приложения)
-      if (tg.onEvent) tg.onEvent('themeChanged', function() {
-        var newTheme = (this && this.colorScheme) ? this.colorScheme : tg.colorScheme || getTheme();
-        applyTheme(newTheme);
-      });
-    } catch (e) {}
+      if (tg.setHeaderColor) tg.setHeaderColor('#46cdca');
+      if (tg.setBackgroundColor) tg.setBackgroundColor('#46cdca');
+    } catch(e) {}
   }
-  // В браузере не подписываемся на смену системной темы — остаётся тёмная. В Telegram тема меняется через themeChanged выше.
 
-  function $(s, r){ return (r || document).querySelector(s); }
-  function $$(s, r){ return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
+  const $ = (s, r=document) => r.querySelector(s);
+  const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
 
-  var views = {
-    main: $('#view-main'),
-    now: $('#view-now'),
-    path: $('#view-path'),
-    item: $('#view-item'),
-    favs: $('#view-favs')
-  };
-
-  var navItems = $$('.nav-item');
-
-  var toastEl = $('#toast');
-  var toastTimer = null;
+  const app = $('#app');
+  const toastEl = $('#toast');
+  let toastTimer = null;
   function toast(msg){
     toastEl.textContent = msg;
     toastEl.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, 1600);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1600);
   }
 
-  // =====================
-  // Profile: из Telegram или плейсхолдер (Гость + инициал)
-  // =====================
-  var USER = {
+  const USER = {
     name: 'Гость',
     level: 7,
     avatarUrl: null,
-    initials: 'Г'
+    initials: 'Г',
   };
 
   function initUserFromTelegram() {
-    var tw = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
-    var u = tw && tw.initDataUnsafe && tw.initDataUnsafe.user;
+    const tw = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+    const u = tw && tw.initDataUnsafe && tw.initDataUnsafe.user;
     if (u) {
       USER.name = [u.first_name || '', (u.last_name || '').trim()].join(' ').trim() || 'Гость';
       USER.avatarUrl = u.photo_url || null;
-      var first = (u.first_name || '').trim();
-      var last = (u.last_name || '').trim();
+      const first = (u.first_name || '').trim();
+      const last = (u.last_name || '').trim();
       USER.initials = (first.charAt(0) + (last ? last.charAt(0) : first.charAt(1) || '')).toUpperCase().slice(0, 2) || 'Г';
     }
   }
 
   function applyUser(){
-    var nameEl = $('#userName');
-    var levelEl = $('#userLevel');
-    var av = $('#avatar');
+    const nameEl = $('#userName');
+    const levelEl = $('#userLevel');
+    const av = $('#avatar');
     if (nameEl) nameEl.textContent = USER.name;
-    if (levelEl) levelEl.textContent = 'Уровень чувственных знаний: ' + USER.level;
+    if (levelEl) levelEl.textContent = `Уровень чувственных знаний: ${USER.level}`;
     if (!av) return;
     av.classList.remove('initials');
     av.textContent = '';
@@ -1291,7 +897,7 @@
     av.style.backgroundSize = '';
     av.style.backgroundPosition = '';
     if (USER.avatarUrl) {
-      av.style.backgroundImage = 'url("' + USER.avatarUrl + '")';
+      av.style.backgroundImage = `url('${USER.avatarUrl}')`;
       av.style.backgroundSize = 'cover';
       av.style.backgroundPosition = 'center';
     } else {
@@ -1302,492 +908,301 @@
 
   initUserFromTelegram();
   applyUser();
-  document.body.setAttribute('data-route', 'main');
   document.addEventListener('DOMContentLoaded', function() {
     initUserFromTelegram();
     applyUser();
-    setTimeout(function() {
-      initUserFromTelegram();
-      applyUser();
-    }, 300);
   });
 
-  // =====================
-  // Favorites + иконка сердца (минималистичный SVG)
-  // =====================
-  var HEART_ICON_SVG = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
-  var FAV_KEY = 'psychomagia_favs_v3';
-  function getFavs(){
-    try { return JSON.parse(localStorage.getItem(FAV_KEY) || '[]'); } catch(e){ return []; }
-  }
-  function setFavs(ids){ localStorage.setItem(FAV_KEY, JSON.stringify(ids)); }
-  function isFav(id){ return getFavs().indexOf(id) >= 0; }
-  function toggleFav(id){
-    var ids = getFavs();
-    var i = ids.indexOf(id);
-    if (i >= 0) {
-      ids.splice(i,1);
-      setFavs(ids);
-      toast('Убрано из Избранного');
-      return false;
-    }
-    ids.push(id);
-    setFavs(ids);
-    toast('Добавлено в Избранное');
-    return true;
-  }
-
-  // =====================
-  // Links (replace later)
-  // =====================
-  var LINKS = {
+  // Links placeholders (replace with real urls)
+  const LINKS = {
+    join_field: '#',
+    care: '#',
+    photo_diag: '#',
+    live_practice: '#',
+    free_video_1: '#',
+    free_text_1: '#',
+    free_practice_1: '#',
     test_happiness: '#',
     test_libido: '#',
     test_crystal: '#',
-    test_personality: '#',
-    join_field: '#',
-    base: '#',
-    key_videos: '#',
-    program_formula: '#',
-    masters_map: '#',
-    shop: '#'
+    test_personality: '#'
   };
 
-  // =====================
-  // Data models
-  // =====================
-  var DIAGNOSTICS = [
-    { id:'diag_purpose', icon:'✦', title:'Предназначение и направленность', sub:'', tag:'диагностика', locked:true },
-    { id:'diag_wealth', icon:'◈', title:'Степень готовности к истинному богатству', sub:'', tag:'диагностика', locked:true },
-    { id:'diag_rel_now', icon:'❤', title:'Рекомендации в актуальной ситуации в отношениях', sub:'', tag:'диагностика', locked:true },
-    { id:'diag_psycho', icon:'⌁', title:'Рекомендации по психосоматическому здоровью', sub:'', tag:'диагностика', locked:true },
-    { id:'diag_hook', icon:'◎', title:'Ключевая зацепка, ухудшающая настроение', sub:'', tag:'диагностика', locked:true },
-    { id:'diag_power_place', icon:'⛰', title:'Рекомендации по месту силы', sub:'', tag:'диагностика', locked:true },
-    { id:'diag_energy_leisure', icon:'☾', title:'Как восполнить энергию: досуг', sub:'', tag:'диагностика', locked:true },
-    { id:'diag_content', icon:'✺', title:'Контент для духовных озарений', sub:'', tag:'диагностика', locked:true },
-    { id:'diag_sex_block', icon:'🜁', title:'Диагностика блока сексуальной энергии', sub:'', tag:'диагностика', locked:true },
-    { id:'diag_crystal_now', icon:'✧', title:'Текущий уровень кристальности', sub:'', tag:'диагностика', locked:true },
-    { id:'diag_archetype', icon:'🃏', title:'Ключевой архетип', sub:'', tag:'диагностика', locked:true },
-    { id:'diag_mana', icon:'⚡', title:'Текущий уровень энергии Маны', sub:'', tag:'диагностика', locked:true },
-    { id:'diag_assemblage', icon:'◐', title:'Текущий уровень точки сборки и цвет ауры', sub:'', tag:'диагностика', locked:true },
-    { id:'diag_goals', icon:'➤', title:'Цели для успеха в будущем', sub:'', tag:'диагностика', locked:true },
-    { id:'diag_karma', icon:'⟡', title:'Текущий уровень кармы', sub:'', tag:'диагностика', locked:true },
-    { id:'diag_intuition', icon:'🜂', title:'Интуитивные способности', sub:'', tag:'диагностика', locked:true },
-    { id:'diag_dominants', icon:'⎈', title:'Доминанты личности', sub:'', tag:'диагностика', locked:true },
-    { id:'diag_totem', icon:'🜃', title:'Тотемное животное', sub:'', tag:'диагностика', locked:true }
+  // Facts / proof
+  const FACTS = {
+    community: 'Более 300 000 человек',
+    socials_note: 'в разных странах мира',
+    author: 'Автор метода — Искандер Джин',
+    author_facts: '7 книг • научная база • публичные проекты',
+    science: 'Исследование счастья как смысла жизни и психологическая база',
+    docs: 'Документы и подтверждения можно показать по запросу (лицензия/регистрация/прочее)'
+  };
+
+  // Reviews (shortened for minimalism)
+  const REVIEWS = [
+    { name: 'Екатерина Могилева', city: 'Карелия', text: 'Месяц в «Поле Психомагии». Фундаментальные изменения в восприятии и состоянии. Провокаций стало меньше, внутри — больше цельности.' },
+    { name: 'Сажида Мукаилова', city: 'Германия', text: 'Больше года в Психомагии. Жизнь изменилась в лучшую сторону. Это состояние и знание не купить деньгами — оно остаётся с душой.' },
+    { name: 'Фируза Кули Задэ', city: 'Нью-Йорк', text: 'Сексомагия разблокировала силу и фантазию. Принятие любого баланса ангельского и демонического — очень освобождающе.' },
+    { name: 'Вера Левченко', city: 'Орск', text: 'После практики — будто прошла новый уровень духовного мастерства. Поле — мой формат. Очень ценно, что создано такое пространство.' },
+    { name: 'Марина Фукс', city: 'Германия, Кёльн', text: 'После медитаций и принятия тёмной энергии — встретила мужчину по судьбе. До сих пор в шоке. Благодарю команду.' }
   ];
 
-  // Важно: без template literals и без сырых переносов строк внутри кавычек.
-  // Это защищает от "document.write(...)"-обёрток, которые ломаются на неожиданных токенах.
-  var TESTIMONIALS = [
-    { name:'Екатерина Могилева', city:'Карелия', text:'Месяц в ЗК «Поле Психомагии». Замечаю за собой фундаментальные изменения в восприятии и состоянии. Это очень помогает не расшатываться от уроков балансировщиков, а собираться в целое, и расшифровывать из души. И самих провокаций стало гораздо меньше. Непривычно, как бы ждёшь, а их нет))\n\nГлубина в Психомагии бездонная, и по чувственным знаниям, и по энергиям. Предстоящая практика тому ещё одно доказательство. Несколько очень важных судьбоносных решений я в своей жизни приняла, доверившись интуиции, сама того не зная. Здорово, что можно обучиться этим управлять.\n\nБлагодарю Искандера, Психомагию, команду и Полевиков за то, что есть в моей жизни 🫂💖💫' },
-    { name:'Туйяра Аммосова', city:'Якутск', text:'Прошла 5 уроков Женской Кристаллизации, почувствовала себя женщиной, которая может получить много удовольствия от себя и в своей жизни. Стала нежнее и мягче, научилась принимать любые жизненные ситуации, стала чувственнее, стала лучше понимать людей, любить их, стала принимать и любить себя.\n\nБлагодарю Вселенную за то, что я встретилась с Психомагией, и, конечно, благодарю Искандера за чувственные знания, которые я получила за все курсы, которые я прошла, пропустила через себя и стала более счастливой и чувственной ♥️💎💎💎' },
-    { name:'Сажида Мукаилова', city:'Германия', text:'Хочу поделиться: уже больше года в Психомагии. Все курсы невероятно ценные, и я не жалею ни грамма, что обрела эти курсы. С тех пор моя жизнь полностью изменилась только в лучшую сторону. Я стала намного счастливее и иду дальше к своему счастью.\n\nВсе курсы стоили своих денег. Могу точно сказать: эту информацию и состояние, которое ты получаешь от курсов, просто не купить деньгами. Это невероятно ценно. Полученное состояние я беру с собой дальше после смерти — это инвестиция в моё будущее и благополучие будущего поколения.\n\nБлагодарю, Искандер ❤️' },
-    { name:'Ильхама Алиева', city:'Азербайджан', text:'Хочу поблагодарить Искандер Вас 🙏♥️ и всю Вашу сплочённую команду за то, что Вы есть. За то, что Вы делитесь Божественным потоком знаний 🙏 За то, что Вы с искрой в глазах, с огнём в сердце, с захватывающим дыханием и с не сходящей с лица улыбкой становитесь источником родниковой воды, к устьям которого прильнули столько жаждущих.\n\nПрошла не один Ваш курс, но именно «Сексомагия» стала той отправной точкой, когда всё начало двигаться — и в лучшую сторону. Я чувствую себя абсолютно новой, уверенной, наполненной, а главное, счастливой женщиной — сама по себе, сама для себя, сама ради себя!\n\nПоказатель — красивые букеты цветов, которыми засыпан весь мой дом ♥️💐 С любовью к Творцу и всем Вам ♥️💐' },
-    { name:'Фируза Кули Задэ', city:'Нью-Йорк', text:'На данном этапе я прошла «Сексомагию». До этого прошла больше десяти курсов Психомагии. Я точно знала, что у меня было 60% Ангелов и 40% Демонов. Но после курса я почувствовала в себе больше Демонов, чем Ангелов — фантазия зашкаливает. Я разблокировала чувства, которые долго прятала, и почувствовала мощь и силу.\n\nКурс подарил ощущение принятия своего уровня демонической энергии 😈 Это очень освобождающее чувство — «правильности» любого баланса ангельского и демонического.\n\nКто находится в Поле Психомагии и развивается, тот уже «избранный». Ключ — это мудрость, с которой открываешь дверь к изобилию и счастью. Искандер, вы настоящий Джин-волшебник. Благодарю за ваше великое дело — делать людей счастливыми 🙏' },
-    { name:'Аделя Арсаланова', city:'Сочи', text:'Хочу выразить благодарность Искандеру и Ольге за возможность, которая открывалась мне однажды. 🦁🙌 В нужный момент приходил звоночек от Психомагии и голос тотема Льва из Поля: «Заходи, тебя здесь ждут, всё получится».\n\nЯ осознаю, что некоторые вещи доходят очень поздно, но вся эта реальность виртуозно соединяет нас с нужными людьми для игры. Наши травмы могут мешать видеть ясно и чувствовать истину.\n\nБлагодарю за проявления и желаю процветания и раскрытия кодов ещё шире. Пусть изобилие множится. Шлю поток благодарности из Львиной части себя 🦁👑' },
-    { name:'Вера Левченко', city:'Орск', text:'Хочу оставить отзыв из Поля Психомагии. После практики я погрузилась в такой объём чувственных знаний, будто прошла новый уровень духовного мастерства. Будто прошёл год — а по времени прошёл час.\n\nОсознаю, как ценно, что создано такое Поле. Для меня это самый мой формат! Благодарю, Искандер, мощный Проводник ❤️ Столько расширяющего материала — космос!' },
-    { name:'Евгения Волошина', city:'Московская область', text:'Прошло 3 месяца моей работы над собой, и хочу поделиться ощущениями. Психомагия действительно работает 👍\n\nВижу внутренние и внешние изменения. Уровень счастья повысился, много инсайтов и расшифровок. Листая фото и видео за год, вижу колоссальную разницу. Кто сомневается — от души советую проходить курсы полностью ❤️💋\n\nСпасибо Искандеру и Ольге 🙏' },
-    { name:'Раиса Донская', city:'Мытищи, Московская область', text:'Искандер, от души благодарю за курс «Сексомагия». Мне всё понравилось! 🥰\n\nСамое важное открытие — гармония Света и Тьмы. Появилась целостность восприятия своих порывов и фантазий. Благодарю! ☺️' }
-  ];
-
-  var PATH = [
-    { id:'evolution', icon:'✦', title:'Карта уровней', sub:'Новичок → Посвящённая → Мастер → Кристалл → Маг.', tag:'рост', url:'#' },
-    { id:'sequence', icon:'◈', title:'Последовательность программ', sub:'Как идти по системе без хаоса.', tag:'маршрут', url:'#' },
-    { id:'masters_map', icon:'🗺', title:'Карта мастеров', sub:'Кто рядом, чем помогает, отзывы.', tag:'люди', url:LINKS.masters_map },
-    { id:'field', icon:'✺', title:'Поле Психомагии', sub:'Доступ, поддержка и глубина.', tag:'Поле', url:LINKS.join_field },
-    { id:'techniques', icon:'⟡', title:'Техники', sub:'Точные действия для изменений.', tag:'техники', url:'#' },
-    { id:'practices', icon:'◎', title:'Практики', sub:'Регулярная настройка состояния.', tag:'практики', url:'#' },
-    { id:'books', icon:'⌁', title:'Книги', sub:'Текстовые, аудио, физические.', tag:'книги', url:'#' },
-    { id:'marathons', icon:'⌁', title:'Марафоны', sub:'Циклы трансформации.', tag:'марафоны', url:'#' },
-    { id:'retreats', icon:'☾', title:'Онлайн-ретриты', sub:'Глубокие погружения дома.', tag:'ретриты', url:'#' },
-    { id:'meetups', icon:'❤', title:'Живые встречи', sub:'Практика вживую.', tag:'встречи', url:'#' },
-    { id:'messages', icon:'✺', title:'Послания', sub:'Короткие тексты ясности.', tag:'послания', url:'#' },
-    { id:'shop', icon:'⟡', title:'Магазин', sub:'Артефакты, книги, доступы.', tag:'магазин', url:LINKS.shop }
-  ];
-
-  // =====================
-  // Rendering helpers
-  // =====================
   function escapeHTML(s){
     return String(s)
-      .replace(/&/g,'&amp;')
-      .replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;')
-      .replace(/"/g,'&quot;')
-      .replace(/'/g,'&#039;');
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+      .replaceAll('"','&quot;')
+      .replaceAll("'",'&#039;');
   }
 
-  function tileHTML(item){
-    var on = item.id && isFav(item.id);
-    var lock = item.locked ? '🔒 ' : '';
-    var iconWrap = (item.icon === '❤') ? ('<span class="tile-icon-svg">' + HEART_ICON_SVG + '</span>') : ('<span style="position:relative; font-size:16px;">' + escapeHTML(item.icon || '✦') + '</span>');
-    return ''
-      + '<div class="tile" data-open="' + escapeHTML(item.id || '') + '" data-url="' + escapeHTML(item.url || '#') + '" data-title="' + escapeHTML(item.title || '') + '">'
-      +   '<div class="tile-icon">' + iconWrap + '</div>'
-      +   '<div class="tile-main">'
-      +     '<p class="tile-title">' + lock + escapeHTML(item.title || '') + '</p>'
-      +     (item.sub ? '<p class="tile-sub">' + escapeHTML(item.sub) + '</p>' : '')
-      +     '<div class="chip" style="margin-top:10px;">' + escapeHTML(item.tag || 'раздел') + '</div>'
-      +   '</div>'
-      +   '<div class="tile-actions">'
-      +     (item.id ? '<div class="fav ' + (on ? 'on' : '') + '" data-fav="' + escapeHTML(item.id) + '" title="Избранное">' + HEART_ICON_SVG + '</div>' : '')
-      +   '</div>'
-      + '</div>';
+  function renderReviews(){
+    const el = $('#reviews');
+    el.innerHTML = REVIEWS.map(r => `
+        <div class="review">
+          <div class="review-top">
+            <p class="review-name">${escapeHTML(r.name)}</p>
+            <p class="review-city">${escapeHTML(r.city)}</p>
+          </div>
+          <p class="review-text">${escapeHTML(r.text)}</p>
+        </div>
+      `).join('');
   }
+  renderReviews();
 
-  function renderList(el, arr){
-    if (!el) return;
-    var html = '';
-    for (var i=0;i<arr.length;i++) html += tileHTML(arr[i]);
-    el.innerHTML = html;
-  }
-
-  renderList($('#diagList'), DIAGNOSTICS);
-  renderList($('#pathList'), PATH);
-
-  // Today in Field teaser
-  var TODAY_FIELD = [
-    { id:'tf1', icon:'✦', title:'Практика недели', sub:'Короткая настройка состояния и ясности.', tag:'Поле', url:LINKS.join_field },
-    { id:'tf2', icon:'◎', title:'Новая расшифровка', sub:'Пример глубинного вывода на реальной ситуации.', tag:'Поле', url:LINKS.join_field },
-    { id:'tf3', icon:'❤', title:'Живой разбор', sub:'Тёплая поддержка и верная траектория.', tag:'Поле', url:LINKS.join_field }
+  // Diagnostics (minimal list for free channel)
+  const DIAGNOSTICS = [
+    { id:'diag_purpose', ico:'✦', title:'Предназначение и направленность', sub:'Вектор души — куда идти, чтобы стало легче.' },
+    { id:'diag_rel', ico:'❤', title:'Отношения — рекомендации на сейчас', sub:'Точное действие без лишних слов и иллюзий.' },
+    { id:'diag_psycho', ico:'⌁', title:'Психосоматика — состояние здоровья', sub:'Где тело сигналит и как вернуть баланс.' },
+    { id:'diag_crystal', ico:'◇', title:'Текущий уровень кристальности', sub:'Насколько чисто намерение и где искажение.' },
+    { id:'diag_mana', ico:'⚡', title:'Уровень энергии Маны', sub:'Сколько ресурса и куда направить.' },
+    { id:'diag_intuition', ico:'◎', title:'Интуитивные способности', sub:'Ведущий канал чувствования и усиление точности.' },
+    { id:'diag_karma', ico:'⟡', title:'Текущий уровень кармы', sub:'Какая тема требует развязки.' },
   ];
-  renderList($('#todayField'), TODAY_FIELD);
 
-  // Render reviews
-  var reviewsEl = $('#reviewsList');
-  if (reviewsEl) {
-    var rhtml = '';
-    for (var r=0;r<TESTIMONIALS.length;r++){
-      var it = TESTIMONIALS[r];
-      var city = (it.city || '').trim();
-      var cityHTML = city ? '<p class="review-city">' + escapeHTML(city) + '</p>' : '<p class="review-city" style="opacity:.0;">&nbsp;</p>';
-      rhtml += ''
-        + '<div class="review">'
-        +   '<div class="review-top">'
-        +     '<p class="review-name">' + escapeHTML(it.name) + '</p>'
-        +     cityHTML
-        +   '</div>'
-        +   '<p class="review-text">' + escapeHTML(it.text) + '</p>'
-        +   '<div class="chip" style="margin-top:10px;">отзыв</div>'
-        + '</div>';
-    }
-    reviewsEl.innerHTML = rhtml;
+  function tileHTML(d){
+    return `
+        <div class="tile" data-open="${escapeHTML(d.id)}">
+          <div class="t-ico" aria-hidden="true">${escapeHTML(d.ico)}</div>
+          <div class="t-main">
+            <p class="t-title">🔒 ${escapeHTML(d.title)}</p>
+            <p class="t-sub">${escapeHTML(d.sub)} (доступ в Поле)</p>
+          </div>
+        </div>
+      `;
+  }
+  $('#diagList').innerHTML = DIAGNOSTICS.map(tileHTML).join('');
+
+  // Books section
+  const BOOKS = [
+    { id:'books_audio', ico:'▶', title:'Аудиокниги', sub:'Слушать в формате видео/аудио.' },
+    { id:'books_text', ico:'⌁', title:'Текстовые книги', sub:'Читать внутри Telegram или по ссылке.' },
+    { id:'books_physical', ico:'◈', title:'Физические книги', sub:'Краткие описания и заказ.' },
+  ];
+  $('#booksList').innerHTML = BOOKS.map(b => `
+      <div class="tile" data-open="${escapeHTML(b.id)}">
+        <div class="t-ico" aria-hidden="true">${escapeHTML(b.ico)}</div>
+        <div class="t-main">
+          <p class="t-title">${escapeHTML(b.title)}</p>
+          <p class="t-sub">${escapeHTML(b.sub)}</p>
+        </div>
+      </div>
+    `).join('');
+
+  // Views / routing
+  const views = {
+    now: $('#view-now'),
+    deeper: $('#view-deeper'),
+    space: $('#view-space'),
+    item: $('#view-item'),
+  };
+
+  const navBtns = $$('.nav-item');
+  const state = { route: 'now', prev: 'now' };
+
+  function setActive(route){
+    Object.values(views).forEach(v => v.classList.remove('active'));
+    (views[route] || views.now).classList.add('active');
+    navBtns.forEach(b => b.classList.toggle('active', b.dataset.route === route));
+    app.scrollTo({ top:0, behavior:'smooth' });
   }
 
-  // =====================
-  // Routing
-  // =====================
-  var state = { route:'main', prev:'main' };
-
-  function setActiveView(route){
-    for (var k in views) { if (views[k]) views[k].classList.remove('active'); }
-    (views[route] || views.main).classList.add('active');
-    document.body.setAttribute('data-route', route === 'item' ? 'item' : (route || 'main'));
-
-    for (var i=0;i<navItems.length;i++) navItems[i].classList.remove('active');
-    for (var j=0;j<navItems.length;j++) {
-      if (navItems[j].dataset.route === route) { navItems[j].classList.add('active'); break; }
-    }
-
-    var sc = document.querySelector('.app');
-    if (sc) sc.scrollTo({ top:0, behavior:'smooth' });
-  }
-
-  function navigate(route){
+  function go(route){
     state.prev = state.route;
     state.route = route;
-    setActiveView(route);
-    if (route === 'favs') renderFavs();
+    setActive(route);
   }
 
-  // Bottom nav
-  for (var i=0;i<navItems.length;i++){
-    (function(n){
-      n.addEventListener('click', function(){ navigate(n.dataset.route); });
-    })(navItems[i]);
+  navBtns.forEach(b => b.addEventListener('click', () => go(b.dataset.route)));
+
+  // Swipe between three main tabs
+  let touchX = null;
+  document.addEventListener('touchstart', (e) => {
+    if (!e.touches || !e.touches.length) return;
+    touchX = e.touches[0].clientX;
+  }, { passive:true });
+
+  document.addEventListener('touchend', (e) => {
+    if (touchX === null) return;
+    const endX = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientX : null;
+    if (endX === null) { touchX = null; return; }
+    const dx = endX - touchX;
+    touchX = null;
+    if (Math.abs(dx) < 70) return;
+    if (!['now','deeper','space'].includes(state.route)) return;
+    const tabs = ['now','deeper','space'];
+    const idx = tabs.indexOf(state.route);
+    if (dx < 0 && idx < tabs.length - 1) go(tabs[idx+1]);
+    if (dx > 0 && idx > 0) go(tabs[idx-1]);
+  }, { passive:true });
+
+  // Item screen
+  function openLink(url, fallback){
+    if (url && url !== '#') window.open(url, '_blank');
+    else toast(fallback);
   }
 
-  // Cards/tile open
-  document.addEventListener('click', function(e){
-    var t = e.target;
-
-    var favEl = t.closest ? t.closest('[data-fav]') : null;
-    if (favEl) {
-      var id = favEl.dataset.fav;
-      var on = toggleFav(id);
-      favEl.classList.toggle('on', on);
-      if (state.route === 'favs') renderFavs();
-      return;
-    }
-
-    var openCard = t.closest ? t.closest('[data-open]') : null;
-    if (openCard && openCard.dataset.open) {
-      openEntity(openCard.dataset.open);
-      return;
-    }
-
-    var routeEl = t.closest ? t.closest('[data-route]') : null;
-    if (routeEl && routeEl.dataset.route) {
-      navigate(routeEl.dataset.route);
-      return;
-    }
-  });
-
-  // Header / modal buttons
-  $('#btnClose').addEventListener('click', function(){ $('#modal').classList.remove('show'); });
-  if ($('#profileCard')) {
-    $('#profileCard').addEventListener('click', function(){ /* можно открыть профиль */ });
-    $('#profileCard').addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); } });
-  }
-
-  // При скролле вниз в топбаре остаётся только иконка + «Психомагия», карточка профиля скрывается
-  (function(){
-    var app = document.querySelector('.app');
-    var threshold = 60;
-    if (!app) return;
-    function onScroll(){
-      var scrolled = app.scrollTop > threshold;
-      document.body.setAttribute('data-topbar-scrolled', scrolled ? 'true' : 'false');
-    }
-    app.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-  })();
-
-  $('#btnHow').addEventListener('click', function(){
-    var el = $('#howText');
-    el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
-  });
-
-  $('#btnCopy').addEventListener('click', function(){
-    var ok = false;
-    try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(document.documentElement.outerHTML);
-        ok = true;
-      }
-    } catch(e) {}
-    toast(ok ? 'HTML скопирован' : 'Не удалось скопировать');
-  });
-
-  $('#btnFavs').addEventListener('click', function(){
-    $('#modal').classList.remove('show');
-    renderFavs();
-    navigate('favs');
-  });
-
-  // Main hero buttons
-  $('#btnBase').addEventListener('click', function(){ openLink(LINKS.base, 'Подключим ссылку на «База Психомагии»'); });
-  $('#btnKeyVideos').addEventListener('click', function(){ openLink(LINKS.key_videos, 'Подключим ссылку на «Ключевые видео»'); });
-
-  // Diagnostics hero buttons
-  $('#btnJoinField').addEventListener('click', function(){ openLink(LINKS.join_field, 'Подключим ссылку на вход в Поле'); });
-
-  // Top Field CTA
-  $('#btnJoinFieldTop').addEventListener('click', function(){ openLink(LINKS.join_field, 'Подключим ссылку на вход в Поле'); });
-  $('#btnWhyFieldTop').addEventListener('click', function(){ toast('Поле даёт доступ к глубинным расшифровкам, поддержку и регулярную практику'); });
-  $('#btnWhyField').addEventListener('click', function(){ toast('Поле даёт доступ, поддержку и верную траекторию'); });
-
-  // Path hero buttons
-  $('#btnEvolution').addEventListener('click', function(){ openEntity('evolution'); });
-  $('#btnCourses').addEventListener('click', function(){ openEntity('sequence'); });
-
-  // Back from item
-  $('#btnBack').addEventListener('click', function(){
-    var back = (state.prev && state.prev !== 'item') ? state.prev : 'main';
-    navigate(back);
-  });
-
-  // Переключение табов только по нажатию на пункт таб-бара; свайп не переключает разделы
-
-  // =====================
-  // Entity open logic
-  // =====================
-  function openLink(url, fallbackMsg){
-    if (url && url !== '#') {
-      window.open(url, '_blank');
-    } else {
-      toast(fallbackMsg);
-    }
-  }
-
-  function openEntity(key){
-    var testMap = {
-      test_happiness: { title:'Тест счастья', text:'Откроется Telegram-бот и проведёт вас по тесту.', tag:'бот', url:LINKS.test_happiness },
-      test_libido: { title:'Тест либидо', text:'Определение уровня энергии и состояния.', tag:'бот', url:LINKS.test_libido },
-      test_crystal: { title:'Тест кристальности', text:'Уровень чистоты намерения и ясности.', tag:'бот', url:LINKS.test_crystal },
-      test_personality: { title:'Диагностика личности', text:'Психологический профиль и ключевые особенности.', tag:'бот', url:LINKS.test_personality }
-    };
-
-    var entity = testMap[key] || {
-      title: prettyTitle(key),
-      text: 'Плейсхолдер. Здесь будет содержимое, ссылки и материалы.',
-      tag: 'раздел',
-      url: '#'
-    };
-
-    if (key === 'program_formula') {
-      entity.title = 'Формула счастья';
-      entity.text = 'Базовая программа, которая раскрывает ядро философии Психомагии и собирает картину целиком.';
-      entity.tag = 'программа';
-      entity.url = LINKS.program_formula;
-    }
-    if (key === 'masters_map') {
-      entity.title = 'Карта мастеров Психомагии';
-      entity.text = 'Интерактивная карта: имя, город, деятельность, уровень чувственных знаний и отзывы о мастере.';
-      entity.tag = 'карта';
-      entity.url = LINKS.masters_map;
-    }
-    if (key === 'shop') {
-      entity.title = 'Магазин Психомагии';
-      entity.text = 'Артефакты, книги, доступы и редкие материалы.';
-      entity.tag = 'магазин';
-      entity.url = LINKS.shop;
-    }
-    if (key === 'field') {
-      entity.title = 'Поле Психомагии';
-      entity.text = 'Подписка, преимущества, формат и вход. Через Поле раскрывается доступ к диагностике.';
-      entity.tag = 'Поле';
-      entity.url = LINKS.join_field;
-    }
-    if (key === 'evolution') {
-      entity.title = 'Путь духовного роста Психомагии';
-      entity.text = 'Ступени роста чувственных знаний. Привязка: 3000 единиц = 9 000 000 ₽ (30 курсов × 300 000 ₽ минимум). Значит 1 единица ≈ 3 000 ₽.';
-      entity.tag = 'карта';
-      entity.url = '#';
-    }
-    if (key === 'sequence') {
-      entity.title = 'Последовательность прохождения курсов';
-      entity.text = 'Здесь будет схема: какие программы на каком уровне и в каком порядке проходить — дополним вашей диктовкой.';
-      entity.tag = 'путь';
-      entity.url = '#';
-    }
-
+  function openItem(title, text, tag, url){
     state.prev = state.route;
-    $('#itemTitle').textContent = entity.title;
-    $('#itemHeadline').textContent = entity.title;
-    $('#itemText').textContent = entity.text;
-    $('#itemTag').textContent = entity.tag;
-    $('#itemBadge').innerHTML = '<span class="glow-dot"></span> Психомагия';
-
-    $('#itemOpen').onclick = function(){ openLink(entity.url, 'Подключим ссылку'); };
-
-    var favId = key;
-    var favBtn = $('#itemFav');
-    var on = isFav(favId);
-    favBtn.querySelector('span:last-child').textContent = on ? 'В Избранном' : 'В Избранное';
-    favBtn.onclick = function(){
-      var now = toggleFav(favId);
-      favBtn.querySelector('span:last-child').textContent = now ? 'В Избранном' : 'В Избранное';
+    $('#itemTop').textContent = 'Раздел';
+    $('#itemTag').textContent = tag || '—';
+    $('#itemBadge').textContent = tag || 'раздел';
+    $('#itemTitle').textContent = title;
+    $('#itemText').textContent = text;
+    $('#itemOpen').onclick = () => openLink(url || '#', 'Ссылка будет подключена');
+    $('#itemBack').onclick = () => {
+      const back = (state.prev && state.prev !== 'item') ? state.prev : 'now';
+      go(back);
     };
+    go('item');
+  }
 
-    var content = [];
-    if (key === 'masters_map') {
-      content.push({ id:'m1', icon:'◎', title:'Наталья Вен — Москва', sub:'Практик. Работа с отношениями. Уровень: 5.', tag:'мастер' });
-      content.push({ id:'m2', icon:'◎', title:'Фируза — Алматы', sub:'Практик. Энергия и женская сила. Уровень: 4.', tag:'мастер' });
-      content.push({ id:'m3', icon:'◎', title:'Элина — Санкт-Петербург', sub:'Практик. Самоценность и опора. Уровень: 4.', tag:'мастер' });
-      content.push({ id:'m4', icon:'◎', title:'Рафаэль — Дубай', sub:'Практик. Сценарии судьбы. Уровень: 6.', tag:'мастер' });
-      content.push({ id:'m5', icon:'◎', title:'Живилея — Вильнюс', sub:'Практик. Интуитивные способности. Уровень: 5.', tag:'мастер' });
-      content.push({ id:'mr', icon:'❤', title:'Отзывы о мастерах', sub:'Открыть отзывы и результаты клиентов.', tag:'отзывы' });
-    } else if (key === 'books') {
-      content.push({ id:'b1', icon:'⌁', title:'Текстовые книги', sub:'Читать внутри Telegram или на сайте.', tag:'текст' });
-      content.push({ id:'b2', icon:'▶', title:'Аудиокниги', sub:'Слушать в дороге и в паузах.', tag:'аудио' });
-      content.push({ id:'b3', icon:'◈', title:'Физические книги', sub:'Заказать доставку.', tag:'физические' });
-    } else if (key === 'techniques' || key === 'practices') {
-      content.push({ id:'p1', icon:'✦', title:'Практика 1', sub:'Плейсхолдер: вы добавите названия.', tag:'практика' });
-      content.push({ id:'p2', icon:'✦', title:'Практика 2', sub:'Плейсхолдер: вы добавите названия.', tag:'практика' });
-      content.push({ id:'p3', icon:'✦', title:'Практика 3', sub:'Плейсхолдер: вы добавите названия.', tag:'практика' });
-    } else {
-      content.push({ id:'x1', icon:'✦', title:'Материалы', sub:'Здесь будет список видео/статей/практик.', tag:'содержимое' });
+  // Top CTAs
+  $('#btnGoDeeper').addEventListener('click', () => go('deeper'));
+  $('#btnTryFree').addEventListener('click', () => toast('Пробные материалы уже ниже на экране'));
+
+  function fieldCTA(){ openLink(LINKS.join_field, 'Подключим ссылку на вход в Поле'); }
+  $('#btnJoinField').addEventListener('click', fieldCTA);
+  $('#btnJoinField2').addEventListener('click', fieldCTA);
+  $('#btnJoinField3').addEventListener('click', fieldCTA);
+  $('#btnJoinField4').addEventListener('click', fieldCTA);
+
+  $('#btnWhyField').addEventListener('click', () => toast('Поле: диагностика по фото, практики, сообщество, библиотека'));
+
+  $('#btnPhotoDiag').addEventListener('click', () => openLink(LINKS.photo_diag, 'Подключим ссылку на диагностику по фото'));
+  $('#btnLivePractice').addEventListener('click', () => openLink(LINKS.live_practice, 'Подключим ссылку на ближайшую практику'));
+
+  $('#btnAskCare').addEventListener('click', () => openLink(LINKS.care, 'Подключим ссылку на службу заботы'));
+  $('#btnHowWorks').addEventListener('click', () => toast('Это пространство устроено как сопровождение, а не как каталог'));
+
+  function openFacts(){
+    const t =
+      `Психомагия — авторская система трансформации сознания.\n\n` +
+      `Что внутри подхода:\n` +
+      `• психология\n` +
+      `• философия\n` +
+      `• духовные практики\n` +
+      `• работа со счастьем как смыслом жизни\n\n` +
+      `Проводник:\n` +
+      `• ${FACTS.author}\n` +
+      `• ${FACTS.author_facts}\n\n` +
+      `Сообщество:\n` +
+      `• ${FACTS.community} — ${FACTS.socials_note}\n\n` +
+      `Подтверждения:\n` +
+      `• ${FACTS.science}\n` +
+      `• ${FACTS.docs}\n\n` +
+      `Если откликается — дальше глубже раскрывается именно в Поле.`;
+
+    openItem('Факты и подтверждения', t, 'ясность', LINKS.join_field);
+  }
+
+  $('#btnProof').addEventListener('click', openFacts);
+
+  // Delegate open cards/tiles
+  const OPEN_MAP = {
+    free_video_1: { title:'Ключевое видео', text:'Плейсхолдер. Подключим ссылку на конкретное видео/пост.', tag:'пробное', url: LINKS.free_video_1 },
+    free_text_1: { title:'Короткий текст', text:'Плейсхолдер. Подключим ссылку на текст/статью.', tag:'пробное', url: LINKS.free_text_1 },
+    free_practice_1: { title:'Демо-практика', text:'Плейсхолдер. Подключим практику в удобном формате.', tag:'пробное', url: LINKS.free_practice_1 },
+    free_test_happiness: { title:'Тест счастья', text:'Откроется Telegram-бот и проведёт вас по тесту.', tag:'тест', url: LINKS.test_happiness },
+
+    test_happiness: { title:'Тест счастья', text:'Откроется Telegram-бот и проведёт вас по тесту.', tag:'тест', url: LINKS.test_happiness },
+    test_libido: { title:'Тест либидо', text:'Определение уровня энергии и состояния.', tag:'тест', url: LINKS.test_libido },
+    test_crystal: { title:'Тест кристальности', text:'Уровень чистоты намерения и ясности.', tag:'тест', url: LINKS.test_crystal },
+    test_personality: { title:'Диагностика личности', text:'Психологический профиль и ключевые особенности.', tag:'тест', url: LINKS.test_personality },
+
+    books_audio: { title:'Аудиокниги', text:'Плейсхолдер. Подключим список аудиокниг (видео/аудио).', tag:'книги', url: '#' },
+    books_text: { title:'Текстовые книги', text:'Плейсхолдер. Подключим библиотеку текстов.', tag:'книги', url: '#' },
+    books_physical: { title:'Физические книги', text:'Плейсхолдер. Подключим карточки книг и заказ.', tag:'книги', url: '#' },
+
+    facts_proof: { _internal: true },
+  };
+
+  document.addEventListener('click', (e) => {
+    const node = e.target.closest('[data-open]');
+    if (!node) return;
+    const key = node.dataset.open;
+
+    // internal facts tile
+    if (key === 'facts_proof') {
+      openFacts();
+      return;
     }
 
-    renderList($('#itemContent'), content);
-    navigate('item');
-  }
-
-  function prettyTitle(key){
-    var map = {
-      my_archetype:'Мой архетип',
-      my_totem:'Моё тотемное животное',
-      my_power_place:'Моё место силы',
-      my_destiny_partner:'Мой партнёр по судьбе',
-      my_crystallinity_level:'Мой уровень кристальности',
-      my_purpose:'Моё предназначение',
-      my_superpowers:'Мои сверхспособности',
-      marathons:'Марафоны',
-      retreats:'Онлайн-ретриты',
-      meetups:'Живые встречи',
-      messages:'Послания человечеству',
-      techniques:'Техники Психомагии',
-      practices:'Практики Психомагии',
-      books:'Книги Психомагии',
-      evolution:'Карта уровней',
-      sequence:'Последовательность программ',
-      field:'Поле Психомагии',
-      shop:'Магазин Психомагии',
-      masters_map:'Карта мастеров Психомагии',
-      program_formula:'Формула счастья',
-      test_happiness:'Тест счастья',
-      test_libido:'Тест либидо',
-      test_crystal:'Тест кристальности',
-      test_personality:'Диагностика личности'
-    };
-    return map[key] || 'Раздел';
-  }
-
-  // Favs view
-  function renderFavs(){
-    var ids = getFavs();
-    var items = [];
-    for (var i=0;i<ids.length;i++){
-      items.push({ id: ids[i], icon:'❤', title: prettyTitle(ids[i]) || ids[i], sub:'Сохранённый раздел/тест/страница.', tag:'избранное', url:'#' });
+    // known items
+    if (key && OPEN_MAP[key] && !OPEN_MAP[key]._internal) {
+      const it = OPEN_MAP[key];
+      openItem(it.title, it.text, it.tag, it.url);
+      return;
     }
-    var listEl = $('#favList');
-    var emptyEl = $('#favEmpty');
-    renderList(listEl, items);
-    emptyEl.style.display = items.length ? 'none' : 'block';
-  }
 
-  // Clicking outside modal closes it
-  $('#modal').addEventListener('click', function(e){
-    if (e.target && e.target.id === 'modal') $('#modal').classList.remove('show');
+    // locked diagnostics
+    if (key && key.startsWith('diag_')) {
+      openItem('Диагностика', 'Эта диагностика раскрывается в Поле Психомагии. Там появляется доступ и поддержка для верного прохождения.', 'закрыто', LINKS.join_field);
+      return;
+    }
+
+    // field blocks
+    if (key && key.startsWith('field_')) {
+      openItem('Поле Психомагии', 'Этот раздел раскрывается глубже в Поле. Подключим ссылку и материалы.', 'Поле', LINKS.join_field);
+      return;
+    }
+
+    // fallback
+    openItem('Раздел', 'Плейсхолдер. Подключим содержание и ссылки.', 'раздел', '#');
   });
 
-  // =====================
-  // Self-tests (dev only)
-  // =====================
-  function assert(cond, msg){ if (!cond) throw new Error('TEST FAIL: ' + msg); }
-
-  function scanForBadChars(str){
-    // U+2028 / U+2029 иногда ломают eval/document.write-обёртки
-    return /\u2028|\u2029|[\u2028\u2029]/.test(str);
+  // --- Minimal in-code tests (console) ---
+  function assert(name, cond){
+    if (!cond) console.error('TEST FAIL:', name);
+    else console.log('TEST OK:', name);
   }
 
-  function runSelfTests(){
-    assert(views.main && views.now && views.path && views.item, 'views exist');
-    assert(navItems.length === 3, 'bottom nav has 3 items');
-    assert(Array.isArray(TESTIMONIALS) && TESTIMONIALS.length >= 5, 'testimonials exist');
-    assert($('#reviewsList') != null, '#reviewsList exists');
-    var anyReview = document.querySelector('.review');
-    assert(!!anyReview, 'at least one .review rendered');
+  function runTests(){
+    assert('Nav buttons exist', $$('.nav-item').length === 3);
+    assert('Views exist', !!$('#view-now') && !!$('#view-deeper') && !!$('#view-space') && !!$('#view-item'));
+    assert('Reviews rendered', ($('#reviews').children || []).length >= 3);
+    assert('Facts tile exists', !!document.querySelector('[data-open="facts_proof"]'));
 
-    for (var i=0;i<TESTIMONIALS.length;i++){
-      assert(!scanForBadChars(TESTIMONIALS[i].text), 'no U+2028/U+2029 in testimonials');
-    }
+    // routing
+    go('deeper');
+    assert('Route changes to deeper', $('#view-deeper').classList.contains('active'));
+    go('space');
+    assert('Route changes to space', $('#view-space').classList.contains('active'));
+    go('now');
+    assert('Route changes back to now', $('#view-now').classList.contains('active'));
 
-    openEntity('field');
-    navigate('main');
-    return true;
+    // open item
+    openItem('Тест', 'Текст', 'tag', '#');
+    assert('Item view opens', $('#view-item').classList.contains('active'));
+
+    // Возвращаем главный экран «Сейчас» после тестов,
+    // чтобы при первом открытии приложения был стартовый экран.
+    go('now');
   }
+  runTests();
 
-  try {
-    runSelfTests();
-  } catch(err) {
-    console.error(err);
-    toast('Ошибка: ' + (err && err.message ? err.message : 'unknown'));
-  }
-
-  toast('Готово: структура по вашей надиктовке');
+  toast('Готово');
 </script>
 </body>
 </html>
