@@ -5,12 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="light" />
   <title>Психомагия — Mini App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&family=Unbounded:wght@300..900&display=swap" rel="stylesheet" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root{
       /* Базовые акценты */
       --accent-blue: #46cdca;
       --accent-purple: #7569b4;
+
+      /* Typography */
+      --font-body: "Inter",-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
+      --font-display: "Unbounded","Inter",-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Segoe UI",Roboto,sans-serif;
 
       /* Нейтральная база */
       --bg:#ffffff;
@@ -42,7 +49,7 @@
     html{ overscroll-behavior:none; }
     body{
       margin:0;
-      font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Segoe UI",Roboto,sans-serif;
+      font-family: var(--font-body);
       color:var(--text);
       -webkit-font-smoothing:antialiased;
       text-rendering:optimizeLegibility;
@@ -52,6 +59,18 @@
         radial-gradient(1000px 800px at 70% 100%, rgba(70,205,202,.16), transparent 60%),
         linear-gradient(180deg, rgba(70,205,202,.06) 0%, rgba(117,105,180,.10) 100%);
       overflow:hidden;
+    }
+
+    .topbar-title,
+    .hero-title,
+    .st,
+    .badge,
+    .card h3,
+    .t-title,
+    .modal-title,
+    .review-name,
+    .name{
+      font-family: var(--font-display);
     }
 
     body:before{
