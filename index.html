@@ -121,6 +121,12 @@
     .topbar-logo{ width: 28px; height: 28px; object-fit: contain; flex-shrink: 0; }
     .topbar-title{ font-size: 15px; font-weight: 900; letter-spacing: .2px; color: var(--text); }
 
+    /* Обёртка блока пользователя: схлопывается при скролле (высота задаётся из JS) */
+    .topbar-user-wrap{
+      overflow: hidden;
+      max-height: 88px;
+    }
+
     .profile-card{
       display: flex;
       align-items: center;
@@ -134,10 +140,14 @@
       cursor: pointer;
       max-height: 80px;
       overflow: hidden;
-      transition: background .2s var(--ease), border-color .2s var(--ease), transform .2s var(--ease);
+      --profile-shift: 0px;
+      opacity: 1;
+      transform: translateY(var(--profile-shift));
+      /* без transition по opacity/transform — управление из JS при скролле для синхронного схлопывания */
+      transition: background .2s var(--ease), border-color .2s var(--ease);
     }
     .profile-card:hover{
-      transform: translateY(-1px);
+      transform: translateY(calc(var(--profile-shift) - 1px));
       background: var(--panel2);
       box-shadow: var(--shadow-soft);
     }
@@ -384,6 +394,65 @@
         0 0 0 1px rgba(70,205,202,.20);
     }
 
+    /* "Глубже" → Бесплатные тесты: фон-фото через отдельный img-слой */
+    .card[data-open="test_happiness"],
+    .card[data-open="test_libido"],
+    .card[data-open="test_crystal"],
+    .card[data-open="test_personality"]{
+      border-color: rgba(0,0,0,.35);
+      box-shadow: 0 16px 44px rgba(0,0,0,.30);
+    }
+    /* Отключаем общий псевдоэлемент-фон для этих карточек, чтобы не трогать текст */
+    .card[data-open="test_happiness"]:before,
+    .card[data-open="test_libido"]:before,
+    .card[data-open="test_crystal"]:before,
+    .card[data-open="test_personality"]:before{
+      background: none;
+      opacity: 0;
+    }
+
+    .card[data-open="test_happiness"] .c-ico,
+    .card[data-open="test_libido"] .c-ico,
+    .card[data-open="test_crystal"] .c-ico,
+    .card[data-open="test_personality"] .c-ico{
+      background: rgba(255,255,255,.14);
+      border-color: rgba(255,255,255,.28);
+      color: rgba(255,255,255,.95);
+      box-shadow: 0 14px 34px rgba(0,0,0,.45);
+    }
+
+    /* Внутренняя структура карточек тестов: отдельный слой с img, затемнённый фильтром */
+    .card.card-test{
+      position: relative;
+      overflow: hidden;
+      background: transparent;
+    }
+    .card-test-bg{
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .card-test-bg img{
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      transform: scale(1.03);
+      filter: brightness(0.5);
+    }
+    .card-test-inner{
+      position: relative;
+      z-index: 1;
+    }
+    /* Сдвиг только фотографии для либидо и личности */
+    .card[data-open="test_libido"] .card-test-bg img{
+      object-position: center 10%;
+    }
+    .card[data-open="test_personality"] .card-test-bg img{
+      object-position: center 20%;
+    }
+
     .card[data-tone="gold"]{ --tone: rgba(117,105,180,.20); }
     .card[data-tone="cyan"]{ --tone: rgba(70,205,202,.22); }
     .card[data-tone="purple"]{ --tone: rgba(117,105,180,.24); }
@@ -422,6 +491,22 @@
     .card p{ margin: 0; font-size: 12px; color: var(--muted); line-height: 1.35; padding-right: 42px; }
 
     .card h3, .card p{ overflow-wrap: anywhere; }
+
+    /* Поверх общих правил: у бесплатных тестов заголовок и текст всегда чисто белые + лёгкое свечение для читабельности */
+    .card[data-open="test_happiness"] h3,
+    .card[data-open="test_libido"] h3,
+    .card[data-open="test_crystal"] h3,
+    .card[data-open="test_personality"] h3{
+      color: #ffffff;
+      text-shadow: 0 0 10px rgba(0,0,0,.85);
+    }
+    .card[data-open="test_happiness"] p,
+    .card[data-open="test_libido"] p,
+    .card[data-open="test_crystal"] p,
+    .card[data-open="test_personality"] p{
+      color: #ffffff;
+      text-shadow: 0 0 10px rgba(0,0,0,.85);
+    }
 
     .list{ display: flex; flex-direction: column; gap: 10px; }
     .tile{
@@ -708,6 +793,7 @@
         <img src="https://i.postimg.cc/52k40X5F/lion-logo-color-1.png" alt="" class="topbar-logo" />
         <span class="topbar-title">Психомагия</span>
       </div>
+      <div class="topbar-user-wrap" id="topbarUserWrap">
       <div class="profile-card" id="profileCard" role="button" tabindex="0">
         <div class="avatar" id="avatar" title="Фото пользователя" aria-label="Фото пользователя"></div>
         <div class="profile">
@@ -717,6 +803,7 @@
           </div>
         </div>
         <span class="profile-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 18l6-6-6-6"/></svg></span>
+      </div>
       </div>
     </div>
   </div>
@@ -811,10 +898,46 @@
 
       <div class="st"><span>Бесплатные тесты</span><small>быстрый вход</small></div>
       <div class="grid">
-        <div class="card" data-tone="gold" data-open="test_happiness"><div class="c-ico" aria-hidden="true">☼</div><h3>Тест счастья</h3><p>Переход в Telegram-бота.</p></div>
-        <div class="card" data-tone="red" data-open="test_libido"><div class="c-ico" aria-hidden="true">❤</div><h3>Тест либидо</h3><p>Уровень энергии и состояния.</p></div>
-        <div class="card" data-tone="cyan" data-open="test_crystal"><div class="c-ico" aria-hidden="true">◇</div><h3>Тест кристальности</h3><p>Чистота намерения и ясность.</p></div>
-        <div class="card" data-tone="purple" data-open="test_personality"><div class="c-ico" aria-hidden="true">◈</div><h3>Диагностика личности</h3><p>Психологический профиль.</p></div>
+        <div class="card card-test" data-tone="gold" data-open="test_happiness">
+          <div class="card-test-bg" aria-hidden="true">
+            <img src="https://i.postimg.cc/0Q2JbsBN/foto1.png" alt="" />
+          </div>
+          <div class="card-test-inner">
+            <div class="c-ico" aria-hidden="true">☼</div>
+            <h3>Тест счастья</h3>
+            <p>Переход в Telegram-бота.</p>
+          </div>
+        </div>
+        <div class="card card-test" data-tone="red" data-open="test_libido">
+          <div class="card-test-bg" aria-hidden="true">
+            <img src="https://i.postimg.cc/1ttfyK8q/foto2.png" alt="" />
+          </div>
+          <div class="card-test-inner">
+            <div class="c-ico" aria-hidden="true">❤</div>
+            <h3>Тест либидо</h3>
+            <p>Уровень энергии и состояния.</p>
+          </div>
+        </div>
+        <div class="card card-test" data-tone="cyan" data-open="test_crystal">
+          <div class="card-test-bg" aria-hidden="true">
+            <img src="https://i.postimg.cc/02mdg8gL/foto3.png" alt="" />
+          </div>
+          <div class="card-test-inner">
+            <div class="c-ico" aria-hidden="true">◇</div>
+            <h3>Тест кристальности</h3>
+            <p>Чистота намерения и ясность.</p>
+          </div>
+        </div>
+        <div class="card card-test" data-tone="purple" data-open="test_personality">
+          <div class="card-test-bg" aria-hidden="true">
+            <img src="https://i.postimg.cc/3RdmthCL/foto4.png" alt="" />
+          </div>
+          <div class="card-test-inner">
+            <div class="c-ico" aria-hidden="true">◈</div>
+            <h3>Диагностика личности</h3>
+            <p>Психологический профиль.</p>
+          </div>
+        </div>
       </div>
 
       <div class="st"><span>Закрытые диагностики</span><small>доступ в Поле</small></div>
@@ -906,31 +1029,21 @@
 
   </div>
 
-  <div class="bottom-nav">
+  <!-- Таб-бар: разделы приложения -->
+  <nav class="bottom-nav" role="tablist" aria-label="Разделы приложения">
     <div class="nav">
-      <!-- Иконка раздела "Сейчас" -->
-      <!-- Вставить ссылку на иконку здесь -->
-      <!-- <img src="PUT_ICON_LINK_FOR_NOW_HERE" alt="Сейчас" /> -->
-      <!-- Если нужно заменить SVG, вставить SVG-код здесь -->
-      <div class="nav-item active" data-route="now">
+      <div class="nav-item active" data-route="now" role="tab" aria-selected="true" aria-label="Сейчас">
         <span class="nav-ico">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <!-- Сейчас: минималистичный «момент» — контур и стрелка-вектор времени -->
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <circle cx="12" cy="12" r="6.5" />
             <path d="M12 12V8.5" />
           </svg>
         </span>
         <span class="nav-label">Сейчас</span>
       </div>
-
-      <!-- Иконка раздела "Глубже" -->
-      <!-- Вставить ссылку на иконку здесь -->
-      <!-- <img src="PUT_ICON_LINK_FOR_DEEPER_HERE" alt="Глубже" /> -->
-      <!-- Если нужно заменить SVG, вставить SVG-код здесь -->
-      <div class="nav-item" data-route="deeper">
+      <div class="nav-item" data-route="deeper" role="tab" aria-selected="false" aria-label="Глубже">
         <span class="nav-ico">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <!-- Глубже: простой вектор «вглубь» — линия-уровень и стрелка вниз -->
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <path d="M7 9h10" />
             <path d="M12 9v6" />
             <path d="M9.5 13.5L12 16l2.5-2.5" />
@@ -938,15 +1051,9 @@
         </span>
         <span class="nav-label">Глубже</span>
       </div>
-
-      <!-- Иконка раздела "Пространство" -->
-      <!-- Вставить ссылку на иконку здесь -->
-      <!-- <img src="PUT_ICON_LINK_FOR_SPACE_HERE" alt="Пространство" /> -->
-      <!-- Если нужно заменить SVG, вставить SVG-код здесь -->
-      <div class="nav-item" data-route="space">
+      <div class="nav-item" data-route="space" role="tab" aria-selected="false" aria-label="Пространство">
         <span class="nav-ico">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <!-- Пространство: орбита и одна точка — минималистичное поле -->
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <ellipse cx="12" cy="13" rx="7" ry="3.8" />
             <circle cx="8.2" cy="12.2" r="1" />
           </svg>
@@ -954,7 +1061,7 @@
         <span class="nav-label">Пространство</span>
       </div>
     </div>
-  </div>
+  </nav>
 
   <div class="toast" id="toast">Готово</div>
 </div>
@@ -984,6 +1091,42 @@
     toastEl.classList.add('show');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1600);
+  }
+
+  // Плавное «схлопывание» блока профиля при прокрутке
+  const profileCardEl = document.getElementById('profileCard');
+  const topbarUserWrapEl = document.getElementById('topbarUserWrap');
+  let lastScrollTop = 0;
+  let scrollTicking = false;
+  const TOPBAR_USER_HEIGHT = 88; // высота блока аватар+имя (схлопывается до 0)
+  const TOPBAR_SCROLL_ZONE = 80;  // за сколько px скролла полностью схлопнуть
+
+  function updateProfileCardOnScroll(scrollTop){
+    const t = Math.min(Math.max(scrollTop / TOPBAR_SCROLL_ZONE, 0), 1);
+    const opacity = 1 - t;
+    const shift = -10 * t;
+
+    if (topbarUserWrapEl) {
+      topbarUserWrapEl.style.maxHeight = `${Math.round(TOPBAR_USER_HEIGHT * (1 - t))}px`;
+    }
+    if (profileCardEl) {
+      profileCardEl.style.opacity = String(opacity);
+      profileCardEl.style.setProperty('--profile-shift', `${shift}px`);
+      profileCardEl.style.pointerEvents = opacity < 0.05 ? 'none' : 'auto';
+    }
+  }
+
+  if (app) {
+    updateProfileCardOnScroll(app.scrollTop || 0);
+    app.addEventListener('scroll', () => {
+      lastScrollTop = app.scrollTop || 0;
+      if (scrollTicking) return;
+      scrollTicking = true;
+      window.requestAnimationFrame(() => {
+        updateProfileCardOnScroll(lastScrollTop);
+        scrollTicking = false;
+      });
+    }, { passive: true });
   }
 
   const USER = {
@@ -1229,7 +1372,11 @@
   function setActive(route){
     Object.values(views).forEach(v => v.classList.remove('active'));
     (views[route] || views.now).classList.add('active');
-    navBtns.forEach(b => b.classList.toggle('active', b.dataset.route === route));
+    navBtns.forEach(b => {
+      const isActive = b.dataset.route === route;
+      b.classList.toggle('active', isActive);
+      b.setAttribute('aria-selected', isActive);
+    });
     app.scrollTo({ top:0, behavior:'smooth' });
   }
 
