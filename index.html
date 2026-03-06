@@ -688,8 +688,8 @@
       -webkit-tap-highlight-color: transparent;
     }
     .nav-ico{
-      width: 20px;
-      height: 20px;
+      width: 26px;
+      height: 26px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -698,13 +698,10 @@
     .nav-ico svg{
       width: 100%;
       height: 100%;
-      stroke: currentColor;
-      fill: none;
-      stroke-width: 1.8;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      transition: stroke .2s var(--ease);
+      transition: filter .2s var(--ease), opacity .2s var(--ease);
     }
+    .nav-item:not(.active) .nav-ico svg{ opacity: .8; }
+    .nav-item.active .nav-ico svg{ opacity: 1; filter: drop-shadow(0 0 6px rgba(255,255,255,.7)); }
     .nav-label{ font-size: 10px; }
     .nav-item:hover{
       color: var(--accent);
@@ -718,7 +715,6 @@
         0 0 12px rgba(70,205,202,.55);
       transform: translateY(-1px);
     }
-    .nav-item.active .nav-ico svg{ stroke: #fff; }
 
     /* Modal (preview) */
     .modal{
@@ -1034,28 +1030,76 @@
     <div class="nav">
       <div class="nav-item active" data-route="now" role="tab" aria-selected="true" aria-label="Сейчас">
         <span class="nav-ico">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <circle cx="12" cy="12" r="6.5" />
-            <path d="M12 12V8.5" />
+          <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <radialGradient id="nowDot" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#7df" />
+                <stop offset="70%" stop-color="#46CDCA" />
+                <stop offset="100%" stop-color="#2ba8a5" />
+              </radialGradient>
+              <filter id="nowGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="1.2" result="blur" />
+                <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+              </filter>
+            </defs>
+            <circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".9" />
+            <circle cx="16" cy="16" r="4" fill="url(#nowDot)" filter="url(#nowGlow)" />
           </svg>
         </span>
         <span class="nav-label">Сейчас</span>
       </div>
       <div class="nav-item" data-route="deeper" role="tab" aria-selected="false" aria-label="Глубже">
         <span class="nav-ico">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path d="M7 9h10" />
-            <path d="M12 9v6" />
-            <path d="M9.5 13.5L12 16l2.5-2.5" />
+          <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="deeperSpiral" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#7569B4" />
+                <stop offset="50%" stop-color="#8b7ec9" />
+                <stop offset="100%" stop-color="#46CDCA" />
+              </linearGradient>
+              <radialGradient id="deeperDrop" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#7df" />
+                <stop offset="100%" stop-color="#46CDCA" />
+              </radialGradient>
+              <filter id="deeperGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="1" result="blur" />
+                <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+              </filter>
+            </defs>
+            <path d="M18 16 A 2 1.5 0 1 1 14 16 A 2 1.5 0 1 1 18 16" fill="none" stroke="url(#deeperSpiral)" stroke-width=".9" />
+            <path d="M20 16 A 4 3 0 1 1 12 16 A 4 3 0 1 1 20 16" fill="none" stroke="url(#deeperSpiral)" stroke-width=".8" opacity=".95" />
+            <path d="M22 16 A 6 4.2 0 1 1 10 16 A 6 4.2 0 1 1 22 16" fill="none" stroke="url(#deeperSpiral)" stroke-width=".7" opacity=".85" />
+            <path d="M24 16 A 8 5.5 0 1 1 8 16 A 8 5.5 0 1 1 24 16" fill="none" stroke="url(#deeperSpiral)" stroke-width=".6" opacity=".75" />
+            <path d="M25.5 16 A 9.5 6.2 0 1 1 6.5 16 A 9.5 6.2 0 1 1 25.5 16" fill="none" stroke="url(#deeperSpiral)" stroke-width=".5" opacity=".65" />
+            <ellipse cx="16" cy="15" rx="2.2" ry="3" fill="url(#deeperDrop)" filter="url(#deeperGlow)" />
           </svg>
         </span>
         <span class="nav-label">Глубже</span>
       </div>
       <div class="nav-item" data-route="space" role="tab" aria-selected="false" aria-label="Пространство">
         <span class="nav-ico">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <ellipse cx="12" cy="13" rx="7" ry="3.8" />
-            <circle cx="8.2" cy="12.2" r="1" />
+          <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <radialGradient id="spacePlanet" cx="35%" cy="35%" r="65%">
+                <stop offset="0%" stop-color="#b8b0e0" />
+                <stop offset="70%" stop-color="#7569B4" />
+                <stop offset="100%" stop-color="#5a4d8f" />
+              </radialGradient>
+              <linearGradient id="spaceRing" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#a89ed9" />
+                <stop offset="100%" stop-color="#7569B4" />
+              </linearGradient>
+              <filter id="spaceGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation=".8" result="blur" />
+                <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+              </filter>
+            </defs>
+            <ellipse cx="16" cy="17" rx="9" ry="4.5" fill="none" stroke="url(#spaceRing)" stroke-width="1.4" opacity=".95" />
+            <circle cx="16" cy="16" r="5" fill="url(#spacePlanet)" filter="url(#spaceGlow)" />
+            <circle cx="9" cy="10" r="1.1" fill="#c4b8f0" opacity=".95" />
+            <circle cx="23" cy="9" r=".9" fill="#b8b0e0" opacity=".9" />
+            <circle cx="7" cy="18" r=".7" fill="#a89ed9" opacity=".85" />
+            <circle cx="25" cy="20" r=".8" fill="#c4b8f0" opacity=".9" />
           </svg>
         </span>
         <span class="nav-label">Пространство</span>
